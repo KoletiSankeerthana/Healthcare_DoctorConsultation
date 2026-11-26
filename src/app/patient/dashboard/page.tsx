@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { BRAND } from "@/lib/brand";
 import { useAuth } from "@/contexts/AuthContext";
 import { DOCTORS } from "@/data/doctors";
 import { formatINR, formatDate } from "@/lib/utils";
@@ -141,21 +142,31 @@ export default function PatientDashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white p-8 rounded-[32px] border border-[#D5E4EF] shadow-subtle">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#258FE5]">
-                Patient Sanctuary
-              </span>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DCECF8] text-[#258FE5] font-semibold border border-[#20B8AD]/30">
-                Active Member
-              </span>
+          <div className="flex items-start gap-4">
+            <div className="relative w-14 h-14 rounded-full overflow-hidden border border-[#D5E4EF] shadow-xs flex-shrink-0 bg-white">
+              <Image
+                src={BRAND.logo}
+                alt={BRAND.displayName}
+                fill
+                className="object-contain p-0.5"
+              />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#163B63]">
-              Welcome back, {displayName}
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-light">
-              Email: <strong className="text-[#163B63] font-medium">{displayEmail}</strong> • Blood Group: <strong className="text-[#163B63] font-medium">{displayBloodGroup}</strong> • Age: {displayAge} • City: <strong className="text-[#163B63] font-medium">{displayCity}</strong>
-            </p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#258FE5]">
+                  {BRAND.displayName} Patient Sanctuary
+                </span>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#DCECF8] text-[#258FE5] font-semibold border border-[#20B8AD]/30">
+                  Active Member
+                </span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#163B63]">
+                Welcome back, {displayName}
+              </h1>
+              <p className="text-xs sm:text-sm text-[#526A82] font-light">
+                Email: <strong className="text-[#163B63] font-medium">{displayEmail}</strong> • Blood Group: <strong className="text-[#163B63] font-medium">{displayBloodGroup}</strong> • Age: {displayAge} • City: <strong className="text-[#163B63] font-medium">{displayCity}</strong>
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">

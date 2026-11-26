@@ -48,7 +48,8 @@ function base64UrlEncode(str: string): string {
 }
 
 /**
- * Generates an RFC 2822 / MIME format email message string.
+ * Generates an RFC 5322 / MIME format email message string with Base64 encoding.
+ * Ensures compatibility across all MTAs, Google Workspace, and spam evaluation systems.
  */
 function createMimeMessage({
   from,
@@ -63,25 +64,32 @@ function createMimeMessage({
   html: string;
   text: string;
 }): string {
-  const boundary = `__MEDIVERSE_BOUNDARY_${Date.now()}__`;
+  const boundary = `__HEALVIA_BOUNDARY_${Date.now()}_${Math.random().toString(36).substring(2, 8)}__`;
+  const textBase64 = Buffer.from(text, "utf-8").toString("base64").match(/.{1,76}/g)?.join("\r\n") || "";
+  const htmlBase64 = Buffer.from(html, "utf-8").toString("base64").match(/.{1,76}/g)?.join("\r\n") || "";
+  const dateStr = new Date().toUTCString();
+  const messageId = `<healvia-${Date.now()}-${Math.random().toString(36).substring(2, 10)}@healvia.com>`;
+
   const lines = [
     `From: ${from}`,
     `To: ${to}`,
-    `Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`,
+    `Subject: =?UTF-8?B?${Buffer.from(subject, "utf-8").toString("base64")}?=`,
+    `Date: ${dateStr}`,
+    `Message-ID: ${messageId}`,
     `MIME-Version: 1.0`,
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     "",
     `--${boundary}`,
     "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: 7bit",
+    "Content-Transfer-Encoding: base64",
     "",
-    text,
+    textBase64,
     "",
     `--${boundary}`,
     "Content-Type: text/html; charset=UTF-8",
-    "Content-Transfer-Encoding: 7bit",
+    "Content-Transfer-Encoding: base64",
     "",
-    html,
+    htmlBase64,
     "",
     `--${boundary}--`
   ];
@@ -121,7 +129,7 @@ async function sendViaGmailApi(
 /**
  * Sends a single notification email with automatic retry and idempotency logging.
  */
-async function sendNotificationEmail({
+export async function sendNotificationEmail({
   appointmentId,
   recipientEmail,
   recipientRole,
@@ -150,7 +158,7 @@ async function sendNotificationEmail({
     process.env.GMAIL_SENDER_EMAIL ||
     process.env.GMAIL_USER ||
     "adminhealthcare4@gmail.com";
-  const senderName = "MediVerse Healthcare Sanctuary";
+  const senderName = "Healvia Healthcare Platform";
   const fromAddress = `"${senderName}" <${senderEmail}>`;
 
   const mimeMessage = createMimeMessage({
@@ -180,7 +188,7 @@ async function sendNotificationEmail({
           };
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   const gmailAccessToken = await getValidGmailAccessToken();
@@ -288,16 +296,23 @@ export async function sendAppointmentConfirmationEmails(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const refCode = appointment.reference || appointment.id;
   const isOnline = (appointment.type || "online") === "online";
-  const consultModeLabel = isOnline ? "Encrypted HD Telemedicine (WebRTC)" : "In-Person Clinical Visit";
+  const consultModeLabel = isOnline ? "Online Consultation (Encrypted HD Video)" : "In-Person Clinical Visit";
+  const feeDisplay = appointment.fee ? `₹${appointment.fee}` : "₹500";
+  const patientName = appointment.patient_name || "Keerthana";
+  const patientEmail = appointment.patient_email || "sankeerthana2905@gmail.com";
+  const doctorName = appointment.doctor_name || "Dr. Sankeerthana";
+  const doctorSpecialty = appointment.doctor_specialty || "General Physician";
+  const doctorEmail = appointment.doctor_email || "koletisankeerthana@gmail.com";
+
   const roomUrl = appointment.meeting_room_id
-    ? `${appUrl}/consultation/${appointment.meeting_room_id}?role=patient&name=${encodeURIComponent(appointment.patient_name)}`
+    ? `${appUrl}/consultation/${appointment.meeting_room_id}?role=patient&name=${encodeURIComponent(patientName)}`
     : `${appUrl}/patient/dashboard`;
   const doctorRoomUrl = appointment.meeting_room_id
-    ? `${appUrl}/consultation/${appointment.meeting_room_id}?role=doctor&name=${encodeURIComponent(appointment.doctor_name)}`
+    ? `${appUrl}/consultation/${appointment.meeting_room_id}?role=doctor&name=${encodeURIComponent(doctorName)}`
     : `${appUrl}/doctor/dashboard`;
 
   // 1. Patient Confirmation Email
-  const patientSubject = `Appointment Confirmed: Consultation with ${appointment.doctor_name} [Ref: ${refCode}]`;
+  const patientSubject = "Appointment Booking Confirmation – Healvia";
   const patientHtml = `
 <!DOCTYPE html>
 <html>
@@ -319,70 +334,93 @@ export async function sendAppointmentConfirmationEmails(
 <body>
   <div class="card">
     <div class="header">
+      <div style="margin-bottom: 12px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="44" height="44" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
       <span class="badge">Appointment Confirmed</span>
-      <h1 style="margin: 12px 0 4px 0; font-size: 24px; font-weight: 500;">MediVerse Healthcare Sanctuary</h1>
+      <h1 style="margin: 12px 0 4px 0; font-size: 24px; font-weight: 500;">HEALVIA Healthcare Platform</h1>
       <p style="margin: 0; font-size: 13px; opacity: 0.85;">Official Clinical Consultation Confirmation</p>
     </div>
     <div class="content">
-      <p style="font-size: 15px; margin-top: 0;">Dear <strong>${appointment.patient_name}</strong>,</p>
-      <p style="font-size: 13px; color: #526A82;">Your upcoming consultation has been automatically confirmed by our clinical scheduling system.</p>
+      <p style="font-size: 15px; margin-top: 0;">Dear <strong>${patientName}</strong>,</p>
+      <p style="font-size: 13px; color: #526A82;">Your consultation has been successfully booked and confirmed in our clinical scheduling system.</p>
 
       <div class="info-box">
-        <div class="info-row"><span>Appointment ID:</span><strong>${appointment.id}</strong></div>
-        <div class="info-row"><span>Booking Reference:</span><strong style="color: #258FE5;">${refCode}</strong></div>
-        <div class="info-row"><span>Consulting Doctor:</span><strong>${appointment.doctor_name}</strong></div>
-        <div class="info-row"><span>Medical Specialty:</span><span>${appointment.doctor_specialty}</span></div>
+        <div class="info-row"><span>Patient Name:</span><strong>${patientName}</strong></div>
+        <div class="info-row"><span>Consulting Doctor:</span><strong>${doctorName}</strong></div>
+        <div class="info-row"><span>Medical Specialty:</span><span>${doctorSpecialty}</span></div>
         <div class="info-row"><span>Scheduled Date:</span><strong>${appointment.date}</strong></div>
         <div class="info-row"><span>Consultation Window:</span><strong>${appointment.time} (IST)</strong></div>
         <div class="info-row"><span>Consultation Mode:</span><span>${consultModeLabel}</span></div>
+        <div class="info-row"><span>Booking Reference:</span><strong style="color: #258FE5;">${refCode}</strong></div>
+        <div class="info-row"><span>Appointment ID:</span><span>${appointment.id}</span></div>
+        <div class="info-row"><span>Consultation Fee:</span><strong>${feeDisplay}</strong></div>
+        <div class="info-row"><span>Booking Status:</span><strong style="color: #059669;">CONFIRMED</strong></div>
         ${appointment.clinic_name && !isOnline ? `<div class="info-row"><span>Clinic Premises:</span><span>${appointment.clinic_name}</span></div>` : ""}
       </div>
 
-      ${
-        isOnline
-          ? `
+      ${isOnline
+      ? `
       <div style="text-align: center; margin: 28px 0;">
         <p style="font-size: 13px; color: #526A82; margin-bottom: 12px;">Your secure encrypted video room is ready for consultation:</p>
         <a href="${roomUrl}" class="btn">Enter Video Consultation Room &rarr;</a>
       </div>`
-          : `
+      : `
       <div style="text-align: center; margin: 28px 0;">
         <a href="${appUrl}/patient/dashboard" class="btn">View Appointment in Sanctuary Dashboard &rarr;</a>
       </div>`
-      }
+    }
+
+      <div style="background: #F1F7FC; border-radius: 12px; padding: 16px; margin-top: 20px; font-size: 12px; color: #334155;">
+        <strong>Important Consultation Instructions:</strong>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px; line-height: 1.6;">
+          <li>Please join the consultation link 5 minutes prior to your scheduled time.</li>
+          <li>Ensure a stable internet connection and that camera/microphone permissions are granted.</li>
+          <li>Keep your previous medical reports or symptom history accessible during the call.</li>
+        </ul>
+      </div>
 
       <p style="font-size: 12px; color: #64748B; margin-top: 24px;">
-        Please join 5 minutes before your scheduled consultation slot. For support or rescheduling inquiries, contact our clinical care desk.
+        For support or rescheduling inquiries, contact our clinical care desk at care@healvia.com.
       </p>
     </div>
     <div class="footer">
-      MediVerse Healthcare Ecosystem • Clinical Care Services • Confidential & Encrypted
+      Healvia Healthcare Ecosystem • Clinical Care Services • Confidential & Encrypted
     </div>
   </div>
 </body>
 </html>`;
 
   const patientText = `
-MediVerse Healthcare Platform - Appointment Confirmation
+Healvia Healthcare Platform - Appointment Booking Confirmation
 
-Dear ${appointment.patient_name},
+Dear ${patientName},
 
-Your consultation with ${appointment.doctor_name} (${appointment.doctor_specialty}) has been confirmed.
+Your consultation with ${doctorName} (${doctorSpecialty}) has been successfully confirmed.
 
-Details:
+Booking Summary:
+- Patient Name: ${patientName}
+- Consulting Doctor: ${doctorName}
+- Medical Specialization: ${doctorSpecialty}
+- Scheduled Date: ${appointment.date}
+- Consultation Window: ${appointment.time} (IST)
+- Consultation Mode: ${consultModeLabel}
+- Booking Reference: ${refCode}
 - Appointment ID: ${appointment.id}
-- Reference: ${refCode}
-- Date: ${appointment.date}
-- Time: ${appointment.time} (IST)
-- Mode: ${consultModeLabel}
-${isOnline ? `- Consultation Room URL: ${roomUrl}` : `- Clinic: ${appointment.clinic_name || "MediVerse Medical Clinic"}`}
+- Consultation Fee: ${feeDisplay}
+- Booking Status: CONFIRMED
+${isOnline ? `- Video Consultation Room: ${roomUrl}` : `- Clinic: ${appointment.clinic_name || "Healvia Medical Clinic"}`}
+
+Consultation Instructions:
+- Please join 5 minutes before your scheduled slot.
+- Ensure camera and microphone permissions are active.
+- Keep previous medical documents ready for review.
 
 Access your dashboard at: ${appUrl}/patient/dashboard
 `;
 
   // 2. Doctor Notification Email
-  const doctorSubject = `New Patient Scheduled: ${appointment.patient_name} [${appointment.date} at ${appointment.time}]`;
-  const doctorEmail = appointment.doctor_email || "dr.arvind@apexheart.in";
+  const doctorSubject = "New Appointment Booked – Healvia";
   const doctorHtml = `
 <!DOCTYPE html>
 <html>
@@ -404,21 +442,26 @@ Access your dashboard at: ${appUrl}/patient/dashboard
 <body>
   <div class="card">
     <div class="header">
+      <div style="margin-bottom: 12px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="44" height="44" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
       <span class="badge">Doctor Schedule Notice</span>
       <h1 style="margin: 12px 0 4px 0; font-size: 24px; font-weight: 500;">New Confirmed Consultation</h1>
       <p style="margin: 0; font-size: 13px; opacity: 0.85;">Patient-Initiated Booking via Published Schedule</p>
     </div>
     <div class="content">
-      <p style="font-size: 15px; margin-top: 0;">Dear <strong>${appointment.doctor_name}</strong>,</p>
+      <p style="font-size: 15px; margin-top: 0;">Dear <strong>${doctorName}</strong>,</p>
       <p style="font-size: 13px; color: #526A82;">A new patient consultation has been reserved from your available schedule slots.</p>
 
       <div class="info-box">
-        <div class="info-row"><span>Patient Name:</span><strong>${appointment.patient_name}</strong></div>
-        <div class="info-row"><span>Patient Email:</span><span>${appointment.patient_email}</span></div>
+        <div class="info-row"><span>Patient Name:</span><strong>${patientName}</strong></div>
+        <div class="info-row"><span>Patient Email:</span><span>${patientEmail}</span></div>
         <div class="info-row"><span>Contact Phone:</span><span>${appointment.patient_phone || "Not recorded"}</span></div>
         <div class="info-row"><span>Consultation Date:</span><strong>${appointment.date}</strong></div>
         <div class="info-row"><span>Slot Time:</span><strong>${appointment.time} (IST)</strong></div>
         <div class="info-row"><span>Consultation Mode:</span><span>${consultModeLabel}</span></div>
+        <div class="info-row"><span>Medical Specialization:</span><strong>${doctorSpecialty}</strong></div>
+        <div class="info-row"><span>Booking Reference:</span><strong style="color: #258FE5;">${refCode}</strong></div>
         <div class="info-row"><span>Symptoms / Reason:</span><span>${appointment.symptoms || "General medical consultation"}</span></div>
         <div class="info-row"><span>Appointment ID:</span><strong>${appointment.id}</strong></div>
       </div>
@@ -430,52 +473,78 @@ Access your dashboard at: ${appUrl}/patient/dashboard
       </div>
     </div>
     <div class="footer">
-      MediVerse Practitioner Portal • Automatic Schedule Coordination
+      Healvia Practitioner Portal • Automatic Schedule Coordination
     </div>
   </div>
 </body>
 </html>`;
 
   const doctorText = `
-MediVerse Healthcare Platform - Doctor Schedule Notification
+Healvia Healthcare Platform - Doctor Schedule Notification
 
-Dear ${appointment.doctor_name},
+Dear ${doctorName},
 
 A new patient appointment has been confirmed for you.
 
 Details:
-- Patient: ${appointment.patient_name} (${appointment.patient_email}, ${appointment.patient_phone || "N/A"})
+- Patient: ${patientName} (${patientEmail}, ${appointment.patient_phone || "N/A"})
 - Date: ${appointment.date}
 - Time: ${appointment.time} (IST)
+- Specialization: ${doctorSpecialty}
 - Mode: ${consultModeLabel}
+- Reference ID: ${refCode}
 - Symptoms: ${appointment.symptoms || "General clinical evaluation"}
 - Appointment ID: ${appointment.id}
 ${isOnline ? `- Video Room URL: ${doctorRoomUrl}` : `- Dashboard: ${appUrl}/doctor/dashboard`}
 `;
 
-  // Dispatch both notifications concurrently
-  const [patientResult, doctorResult] = await Promise.all([
-    sendNotificationEmail({
+  // Dispatch both notifications independently with distinct idempotency keys
+  let patientResult: EmailDispatchResult;
+  let doctorResult: EmailDispatchResult;
+
+  try {
+    patientResult = await sendNotificationEmail({
       appointmentId: appointment.id,
-      recipientEmail: appointment.patient_email,
+      recipientEmail: patientEmail,
       recipientRole: "patient",
-      recipientName: appointment.patient_name,
+      recipientName: patientName,
       subject: patientSubject,
       htmlContent: patientHtml,
       textContent: patientText,
-      idempotencyKey: `apt-confirm-${appointment.id}-patient`
-    }),
-    sendNotificationEmail({
+      idempotencyKey: `appointment-confirmation-patient-${appointment.id}`
+    });
+  } catch (err: any) {
+    console.error(`[emailService] Patient email dispatch error: ${err.message}`);
+    patientResult = {
+      recipient_role: "patient",
+      recipient_email: patientEmail,
+      success: false,
+      status: "failed",
+      error: err.message
+    };
+  }
+
+  try {
+    doctorResult = await sendNotificationEmail({
       appointmentId: appointment.id,
       recipientEmail: doctorEmail,
       recipientRole: "doctor",
-      recipientName: appointment.doctor_name,
+      recipientName: doctorName,
       subject: doctorSubject,
       htmlContent: doctorHtml,
       textContent: doctorText,
-      idempotencyKey: `apt-confirm-${appointment.id}-doctor`
-    })
-  ]);
+      idempotencyKey: `appointment-notification-doctor-${appointment.id}`
+    });
+  } catch (err: any) {
+    console.error(`[emailService] Doctor email dispatch error: ${err.message}`);
+    doctorResult = {
+      recipient_role: "doctor",
+      recipient_email: doctorEmail,
+      success: false,
+      status: "failed",
+      error: err.message
+    };
+  }
 
   return { patient: patientResult, doctor: doctorResult };
 }
@@ -510,9 +579,9 @@ export async function sendDoctorRegistrationNotification(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const refId = payload.applicationReference || payload.doctorId || `DOC-${Date.now()}`;
-  
+
   // Exact subject as specified by requirements
-  const subject = "New Doctor Registration – MediVerse Healthcare Sanctuary";
+  const subject = "New Doctor Registration – Healvia Healthcare Platform";
 
   const submissionTime = payload.submittedAt
     ? new Date(payload.submittedAt).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
@@ -560,9 +629,12 @@ export async function sendDoctorRegistrationNotification(
 <body>
   <div class="card">
     <div class="header">
+      <div style="margin-bottom: 12px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="44" height="44" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
       <span class="tag">Clinical Governance & Compliance</span>
       <h1>New Doctor Registration</h1>
-      <p>A licensed healthcare practitioner has registered and submitted credentials for administrative verification.</p>
+      <p>A licensed healthcare practitioner has registered and submitted credentials for administrative verification in HEALVIA.</p>
     </div>
     <div class="body">
       <div class="doctor-badge">
@@ -593,7 +665,7 @@ export async function sendDoctorRegistrationNotification(
       </div>
     </div>
     <div class="footer">
-      MediVerse Healthcare Sanctuary &bull; Automated Clinical Credentialing Engine<br>
+      Healvia Healthcare Platform &bull; Automated Clinical Credentialing Engine<br>
       Independent audit of physician council credentials, state registries, degree authenticity, and practice licenses.
     </div>
   </div>
@@ -601,8 +673,8 @@ export async function sendDoctorRegistrationNotification(
 </html>`;
 
   const textContent = `
-New Doctor Registration – MediVerse Healthcare Sanctuary
-========================================================
+New Doctor Registration – Healvia Healthcare Platform
+======================================================
 
 A licensed healthcare practitioner has registered and submitted credentials for administrative verification.
 
@@ -643,16 +715,17 @@ ${appUrl}/admin/dashboard
 export async function sendAdminTestEmail(
   recipientEmail: string = "adminhealthcare4@gmail.com"
 ): Promise<EmailDispatchResult> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const targetEmail = recipientEmail.trim() || "adminhealthcare4@gmail.com";
   const timestamp = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
   const testBatchId = `test-${Date.now().toString(36).toUpperCase()}`;
-  const subject = `[MediVerse Verification] Live Gmail OAuth 2.0 API Test (${timestamp} IST)`;
+  const subject = `[Healvia Verification] Live Gmail OAuth 2.0 API Test (${timestamp} IST)`;
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MediVerse Gmail API Test</title>
+  <title>Healvia Gmail API Test</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f0fdf4; color: #1e293b; margin: 0; padding: 24px; }
     .card { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #bbf7d0; box-shadow: 0 10px 25px -5px rgba(22, 163, 74, 0.1); }
@@ -671,9 +744,12 @@ export async function sendAdminTestEmail(
 <body>
   <div class="card">
     <div class="header">
+      <div style="margin-bottom: 10px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="40" height="40" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
       <span class="badge">&check; Live OAuth 2.0 Dispatch</span>
       <h1>Gmail API Integration Active</h1>
-      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 14px;">Automated test transmission from MediVerse Healthcare Sanctuary.</p>
+      <p style="margin: 6px 0 0; opacity: 0.9; font-size: 14px;">Automated test transmission from Healvia Healthcare Platform.</p>
     </div>
     <div class="content">
       <div class="status-box">
@@ -689,15 +765,15 @@ export async function sendAdminTestEmail(
       </table>
     </div>
     <div class="footer">
-      MediVerse Healthcare Sanctuary • Clinical Governance & Communications System
+      Healvia Healthcare Platform • Clinical Governance & Communications System
     </div>
   </div>
 </body>
 </html>`;
 
   const textContent = `
-MediVerse Healthcare Sanctuary - Gmail API Live Test
-====================================================
+Healvia Healthcare Platform - Gmail API Live Test
+=================================================
 This test email confirms that your Gmail OAuth 2.0 integration is active and operating correctly.
 
 - Recipient: ${targetEmail}
@@ -738,7 +814,7 @@ export async function sendDoctorApprovalNotification(
 ): Promise<EmailDispatchResult> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const cleanDoctorName = (payload.doctorName || "Doctor").replace(/^Dr\.\s*/i, "");
-  const subject = "Congratulations! Your Doctor Registration Has Been Approved – MediVerse";
+  const subject = "Congratulations! Your Doctor Registration Has Been Approved – Healvia";
   const approvalDate = payload.approvedAt
     ? new Date(payload.approvedAt).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
     : new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -778,13 +854,16 @@ export async function sendDoctorApprovalNotification(
 <body>
   <div class="card">
     <div class="header">
+      <div style="margin-bottom: 12px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="44" height="44" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
       <span class="tag">&check; Accreditation Verified</span>
       <h1>Credential Verification Approved</h1>
       <p>Congratulations, Dr. ${cleanDoctorName}! Your clinical accreditation has been verified and your practitioner account is fully active.</p>
     </div>
     <div class="body">
       <div class="congrats-banner">
-        <div class="congrats-title">Welcome to the MediVerse Practitioner Network!</div>
+        <div class="congrats-title">Welcome to the Healvia Practitioner Network!</div>
         <p class="congrats-text">Our administrative audit committee has reviewed and officially approved your medical council registration and practicing qualifications.</p>
       </div>
 
@@ -798,7 +877,7 @@ export async function sendDoctorApprovalNotification(
         <tr><td class="label">Verification Status</td><td class="val"><strong style="color: #059669;">APPROVED &bull; Active in Directory</strong></td></tr>
       </table>
 
-      <div class="section-title">Available Next Steps in MediVerse</div>
+      <div class="section-title">Available Next Steps in Healvia</div>
       <div class="steps-box">
         <div class="step-item">
           <div class="step-num">1</div>
@@ -821,20 +900,20 @@ export async function sendDoctorApprovalNotification(
       </div>
     </div>
     <div class="footer">
-      MediVerse Healthcare Sanctuary &bull; Clinical Governance & Practitioner Portal<br>
-      Automated credential approval confirmation. For assistance, reach out to practitioner-support@mediverse.org.
+      Healvia Healthcare Platform &bull; Clinical Governance & Practitioner Portal<br>
+      Automated credential approval confirmation. For assistance, reach out to care@healvia.com.
     </div>
   </div>
 </body>
 </html>`;
 
   const textContent = `
-Congratulations! Your Doctor Registration Has Been Approved – MediVerse
-=======================================================================
+Congratulations! Your Doctor Registration Has Been Approved – Healvia
+=====================================================================
 
 Dear Dr. ${cleanDoctorName},
 
-Congratulations! Your medical credential verification has been approved by the administrative committee. Your practitioner account is now active in the MediVerse healthcare platform.
+Congratulations! Your medical credential verification has been approved by the administrative committee. Your practitioner account is now active in the Healvia healthcare platform.
 
 Approved Account Summary:
 - Physician: Dr. ${cleanDoctorName}
@@ -885,7 +964,7 @@ export async function sendDoctorRejectionNotification(
 ): Promise<EmailDispatchResult> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const cleanDoctorName = (payload.doctorName || "Doctor").replace(/^Dr\.\s*/i, "");
-  const subject = "Update Regarding Your Doctor Registration – MediVerse";
+  const subject = "Update Regarding Your Doctor Registration – Healvia";
   const decisionDate = payload.rejectedAt
     ? new Date(payload.rejectedAt).toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
     : new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -922,16 +1001,19 @@ export async function sendDoctorRejectionNotification(
 <body>
   <div class="card">
     <div class="header">
+      <div style="margin-bottom: 12px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="44" height="44" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
       <span class="tag">Application Status Notice</span>
       <h1>Credential Verification Update</h1>
-      <p>Official notification regarding your practitioner registration with MediVerse Healthcare Sanctuary.</p>
+      <p>Official notification regarding your practitioner registration with Healvia Healthcare Platform.</p>
     </div>
     <div class="body">
       <p style="font-size: 15px; color: #1e293b; line-height: 1.6; margin-top: 0;">
         Dear <strong>Dr. ${cleanDoctorName}</strong>,
       </p>
       <p style="font-size: 13.5px; color: #475569; line-height: 1.6;">
-        Thank you for your interest in joining the MediVerse clinical network. Following our regulatory credentialing review, we regret to inform you that your registration application could not be approved at this time.
+        Thank you for your interest in joining the Healvia clinical network. Following our regulatory credentialing review, we regret to inform you that your registration application could not be approved at this time.
       </p>
 
       <div class="rejection-box">
@@ -951,7 +1033,7 @@ export async function sendDoctorRejectionNotification(
 
       <div class="section-title">Next Steps & Reapplication</div>
       <div class="guidance-box">
-        Please review the reason stated above. If the rejection was due to missing, expired, or unreadable documentation, you are encouraged to update your documents or reapply with verified credentials. For clarification or dispute resolution, our administrative compliance team is available at <a href="mailto:support@mediverse.org" style="color: #258FE5; font-weight: 600;">support@mediverse.org</a>.
+        Please review the reason stated above. If the rejection was due to missing, expired, or unreadable documentation, you are encouraged to update your documents or reapply with verified credentials. For clarification or dispute resolution, our administrative compliance team is available at <a href="mailto:care@healvia.com" style="color: #258FE5; font-weight: 600;">care@healvia.com</a>.
       </div>
 
       <div class="cta-container">
@@ -961,20 +1043,20 @@ export async function sendDoctorRejectionNotification(
       </div>
     </div>
     <div class="footer">
-      MediVerse Healthcare Sanctuary &bull; Clinical Governance & Compliance<br>
-      Statutory review record. If you have questions regarding council guidelines, contact compliance@mediverse.org.
+      Healvia Healthcare Platform &bull; Clinical Governance & Compliance<br>
+      Statutory review record. If you have questions regarding council guidelines, contact care@healvia.com.
     </div>
   </div>
 </body>
 </html>`;
 
   const textContent = `
-Update Regarding Your Doctor Registration – MediVerse
-=====================================================
+Update Regarding Your Doctor Registration – Healvia
+===================================================
 
 Dear Dr. ${cleanDoctorName},
 
-Thank you for your application to join the MediVerse clinical network. Following administrative review, we regret to inform you that your registration could not be approved at this time.
+Thank you for your application to join the Healvia clinical network. Following administrative review, we regret to inform you that your registration could not be approved at this time.
 
 Decision Details:
 - Physician: Dr. ${cleanDoctorName}
@@ -987,7 +1069,7 @@ Reason for Rejection:
 ${payload.rejectionReason}
 
 Guidance:
-Please review the reason specified above. You may address the highlighted issue and reapply with corrected documentation, or reach out to our compliance team at support@mediverse.org.
+Please review the reason specified above. You may address the highlighted issue and reapply with corrected documentation, or reach out to our compliance team at care@healvia.com.
 
 Practitioner Portal:
 ${appUrl}/login?role=doctor
@@ -1002,5 +1084,120 @@ ${appUrl}/login?role=doctor
     htmlContent,
     textContent,
     idempotencyKey: `doc-decision-${payload.applicationId}-reject-${decisionKey}`
+  });
+}
+
+export interface PasswordResetOtpPayload {
+  email: string;
+  recipientName?: string;
+  role?: string;
+  otp: string;
+  expiresInMinutes?: number;
+}
+
+/**
+ * Sends a cryptographically secure 6-digit OTP verification email for password recovery
+ * via Google Cloud Gmail OAuth 2.0 API.
+ */
+export async function sendPasswordResetOtpEmail(
+  payload: PasswordResetOtpPayload
+): Promise<EmailDispatchResult> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const roleLabel = (payload.role || "account").toLowerCase();
+  const capitalizedRole = roleLabel.charAt(0).toUpperCase() + roleLabel.slice(1);
+  const cleanName = payload.recipientName || (payload.role === "doctor" ? "Doctor" : "Valued Member");
+  const expiresMin = payload.expiresInMinutes || 10;
+  const subject = "Password Reset Verification Code – Healvia";
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #EDF5FA; margin: 0; padding: 24px; color: #163B63; }
+    .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 24px; border: 1px solid #D5E4EF; overflow: hidden; box-shadow: 0 4px 20px rgba(18, 61, 104, 0.08); }
+    .header { background: linear-gradient(135deg, #123D68 0%, #163B63 100%); color: #ffffff; padding: 32px 28px; text-align: left; }
+    .badge { display: inline-block; padding: 4px 12px; background: rgba(32, 184, 173, 0.2); border: 1px solid rgba(32, 184, 173, 0.4); color: #20B8AD; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .content { padding: 32px 28px; line-height: 1.6; }
+    .otp-box { background: #F8FBFE; border: 2px dashed #258FE5; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0; }
+    .otp-code { font-family: 'JetBrains Mono', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #163B63; padding: 8px 0; }
+    .footer { padding: 20px 28px; background: #F8FBFE; border-top: 1px solid #DCECF8; font-size: 11px; color: #64748B; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div style="margin-bottom: 12px;">
+        <img src="${appUrl}/images/healvia-logo.png" width="44" height="44" alt="HEALVIA" style="border-radius: 50%; vertical-align: middle; background: #ffffff; padding: 2px;" />
+      </div>
+      <span class="badge">Security & Authentication</span>
+      <h1 style="margin: 12px 0 4px 0; font-size: 24px; font-weight: 500;">Password Reset Request</h1>
+      <p style="margin: 0; font-size: 13px; opacity: 0.85;">Verification code for your Healvia ${capitalizedRole} Account</p>
+    </div>
+    <div class="content">
+      <p style="font-size: 15px; margin-top: 0;">Dear <strong>${cleanName}</strong>,</p>
+      <p style="font-size: 13.5px; color: #526A82;">
+        We received a request to reset the password for your Healvia <strong>${capitalizedRole}</strong> account associated with <strong>${payload.email}</strong>.
+      </p>
+
+      <div class="otp-box">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #526A82; margin-bottom: 6px;">
+          Your 6-Digit Verification Code
+        </div>
+        <div class="otp-code">${payload.otp}</div>
+        <div style="font-size: 11px; color: #94A3B8; margin-top: 6px;">
+          Valid for ${expiresMin} minutes • Do not share this code with anyone
+        </div>
+      </div>
+
+      <p style="font-size: 13px; color: #526A82;">
+        Enter this verification code in the Healvia password recovery portal to choose a new password.
+      </p>
+
+      <div style="background: #F1F7FC; border-radius: 12px; padding: 14px 16px; margin-top: 20px; font-size: 12px; color: #475569;">
+        <strong>Security Notice:</strong> If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged and your account is secure.
+      </div>
+
+      <p style="font-size: 12px; color: #64748B; margin-top: 24px;">
+        For assistance, contact Healvia support at <a href="mailto:care@healvia.com" style="color: #258FE5; font-weight: 600; text-decoration: none;">care@healvia.com</a>.
+      </p>
+    </div>
+    <div class="footer">
+      Healvia Healthcare Ecosystem &bull; Account Security &bull; Confidential & Encrypted
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const textContent = `
+Password Reset Verification Code – Healvia
+==========================================
+
+Dear ${cleanName},
+
+We received a request to reset the password for your Healvia ${capitalizedRole} account (${payload.email}).
+
+Your 6-Digit Verification Code:
+${payload.otp}
+
+This code is valid for ${expiresMin} minutes.
+
+Security Notice: If you did not request this verification code, please disregard this message. Your account remains completely secure.
+
+Healvia Healthcare Platform
+Support: care@healvia.com
+`;
+
+  return sendNotificationEmail({
+    appointmentId: `reset-otp-${Date.now()}`,
+    recipientEmail: payload.email,
+    recipientRole: (payload.role as any) || "patient",
+    recipientName: cleanName,
+    subject,
+    htmlContent,
+    textContent,
+    idempotencyKey: `pwd-reset-otp-${payload.email}-${Date.now().toString(36)}`
   });
 }

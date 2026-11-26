@@ -229,11 +229,10 @@ export default function PatientAppointmentsPage() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-2xl text-xs font-semibold shrink-0 transition-all ${
-                  activeTab === tab.id
-                    ? "bg-[#258FE5] text-white shadow-xs"
-                    : "bg-white text-[#526A82] border border-[#D5E4EF] hover:border-[#D5E4EF] hover:text-[#163B63]"
-                }`}
+                className={`px-4 py-2.5 rounded-2xl text-xs font-semibold shrink-0 transition-all ${activeTab === tab.id
+                  ? "bg-[#258FE5] text-white shadow-xs"
+                  : "bg-white text-[#526A82] border border-[#D5E4EF] hover:border-[#D5E4EF] hover:text-[#163B63]"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -312,13 +311,12 @@ export default function PatientAppointmentsPage() {
                       </div>
 
                       <span
-                        className={`text-[11px] capitalize px-2.5 py-1 rounded-full font-semibold border ${
-                          isCancelled
-                            ? "bg-rose-50 text-rose-700 border-rose-200"
-                            : isCompleted
+                        className={`text-[11px] capitalize px-2.5 py-1 rounded-full font-semibold border ${isCancelled
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : isCompleted
                             ? "bg-[#EAF5FC] text-[#163B63] border-[#D5E4EF]"
                             : "bg-[#EAF5FC] text-[#163B63] border-[#D5E4EF]"
-                        }`}
+                          }`}
                       >
                         {apt.status}
                       </span>
@@ -454,7 +452,7 @@ export default function PatientAppointmentsPage() {
               {isCheckingPolicy ? (
                 <div className="p-4 text-center text-[#526A82] space-y-1">
                   <RefreshCw className="w-5 h-5 text-[#258FE5] animate-spin mx-auto" />
-                  <p>Verifying cancellation deadline with MediVerse clinic policy...</p>
+                  <p>Verifying cancellation deadline with Healvia clinic policy...</p>
                 </div>
               ) : policyData?.eligible ? (
                 /* Eligible for cancellation (>= 24 hours prior) */
@@ -475,7 +473,7 @@ export default function PatientAppointmentsPage() {
                       <span>Non-Refundable Policy Notice</span>
                     </div>
                     <p className="text-[11px] leading-relaxed text-amber-800">
-                      In accordance with clinic appointment regulations, patient-initiated cancellations do not receive a monetary refund. The physician's reserved clinical slot will be released back to the community.
+                      In accordance with clinic appointment regulations, patient-initiated cancellations do not receive a monetary refund. The physician&apos;s reserved clinical slot will be released back to the community.
                     </p>
                   </div>
 
@@ -513,7 +511,7 @@ export default function PatientAppointmentsPage() {
                     Online cancellation is strictly restricted within <strong>24 hours</strong> of the consultation to prevent doctor schedule disruption.
                   </p>
                   <p className="text-[11px] leading-relaxed text-rose-700">
-                    If you have an urgent medical emergency or need immediate assistance, please contact the MediVerse Patient Concierge team directly:
+                    If you have an urgent medical emergency or need immediate assistance, please contact the Healvia Patient Concierge team directly:
                   </p>
                   <div className="p-2.5 bg-white rounded-xl border border-rose-200 text-[#163B63] font-semibold flex items-center justify-between">
                     <span className="flex items-center gap-1.5">

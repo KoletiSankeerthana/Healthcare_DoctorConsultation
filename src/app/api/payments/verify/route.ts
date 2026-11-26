@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { callDbBridge } from "@/lib/dbBridge";
 import { requireAuth } from "@/lib/server-auth";
 import { getPaymentMode, generateDummyTransactionId } from "@/lib/paymentConfig";
+import { sendAppointmentConfirmationEmails } from "@/lib/emailService";
 
 const BACKEND_URL = process.env.BACKEND_API_URL || "http://127.0.0.1:8000/api/v1";
 
@@ -65,6 +66,13 @@ export async function POST(request: NextRequest) {
       if (fastApiRes.ok) {
         const data = await fastApiRes.json();
         console.info(`[Payment API] Verified via FastAPI: payment_id=${data.payment?.id}`);
+        if (data.appointment) {
+          try {
+            await sendAppointmentConfirmationEmails(data.appointment);
+          } catch (e) {
+            console.error("Non-fatal: Email dispatch failed after payment verification:", e);
+          }
+        }
         return NextResponse.json(data, { status: 200 });
       }
     } catch (e) {
@@ -86,6 +94,13 @@ export async function POST(request: NextRequest) {
     }
 
     console.info(`[Payment API] Verified via DB Bridge: payment_id=${result.payment?.id}`);
+    if (result.appointment) {
+      try {
+        await sendAppointmentConfirmationEmails(result.appointment);
+      } catch (e) {
+        console.error("Non-fatal: Email dispatch failed after payment verification:", e);
+      }
+    }
     return NextResponse.json(result, { status: 200 });
   } catch (err: any) {
     console.error("[Payment API] /api/payments/verify error:", err);

@@ -107,7 +107,7 @@ function PaymentFailedContent() {
           {/* Help notice */}
           <div className="pt-2 text-[11px] text-[#94A3B8] flex items-center justify-center gap-1.5">
             <HelpCircle className="w-3.5 h-3.5" />
-            <span>Need assistance? Contact support@mediverse.org</span>
+            <span>Need assistance? Contact care@healvia.com</span>
           </div>
         </div>
       </div>

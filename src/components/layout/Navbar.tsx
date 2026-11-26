@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { Button } from "@/components/ui/Button";
@@ -204,15 +205,22 @@ export const Navbar: React.FC = () => {
             href="/"
             className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2196E3] rounded-xl"
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#2196E3] to-[#18B7AE] flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-all duration-300 border border-white/20">
-              <span className="font-serif text-xl font-normal italic tracking-tight">H</span>
+            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center shadow-md group-hover:scale-105 transition-all duration-300 border border-white/30 shrink-0 bg-white">
+              <Image
+                src={BRAND.logo}
+                alt={`${BRAND.displayName} Logo`}
+                width={40}
+                height={40}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
             <div className="flex flex-col text-left">
               <span className="text-xl font-serif font-normal tracking-tight text-white drop-shadow-xs">
-                {BRAND.name}
+                {BRAND.displayName}
               </span>
-              <span className="text-[9px] uppercase tracking-[0.22em] font-sans font-bold text-[#18B7AE] -mt-0.5">
-                Digital Sanctuary
+              <span className="text-[9px] uppercase tracking-[0.18em] font-sans font-semibold text-[#18B7AE] -mt-0.5">
+                {BRAND.tagline}
               </span>
             </div>
           </Link>
@@ -404,11 +412,11 @@ export const Navbar: React.FC = () => {
                         </Link>
 
                         <Link
-                          href="/patient/profile"
+                          href="/account/settings"
                           className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-serif font-medium text-[#EAF5FC] hover:bg-white/10 hover:text-white transition-colors"
                         >
                           <Settings className="w-4 h-4 text-[#18B7AE]" />
-                          <span>Account Settings</span>
+                          <span>Account Settings &amp; Security</span>
                         </Link>
 
                         <div className="border-t border-white/15 my-1.5" />
@@ -568,7 +576,17 @@ export const Navbar: React.FC = () => {
                           className="w-full justify-center font-serif text-white border-white/30 hover:bg-white/10"
                           leftIcon={<User className="w-4 h-4 text-[#18B7AE]" />}
                         >
-                          My Profile &amp; Settings
+                          My Profile
+                        </Button>
+                      </Link>
+                      <Link href="/account/settings" className="w-full">
+                        <Button
+                          variant="outline"
+                          size="md"
+                          className="w-full justify-center font-serif text-white border-white/30 hover:bg-white/10"
+                          leftIcon={<Settings className="w-4 h-4 text-[#18B7AE]" />}
+                        >
+                          Account Settings &amp; Security
                         </Button>
                       </Link>
                       <button

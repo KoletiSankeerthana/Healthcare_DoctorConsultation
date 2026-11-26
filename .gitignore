@@ -1,5 +1,5 @@
 # =============================================================================
-# MediVerse Healthcare Platform - Git Ignore Rules
+# MediVerse / HEALVIA Healthcare Platform - Git Ignore Rules
 # =============================================================================
 
 # Environment variables and secrets
@@ -16,6 +16,7 @@
 *client_secret*.json
 *service_account*.json
 *token*.json
+gmail_oauth.json
 backend/storage/tokens/
 *.pem
 *.key

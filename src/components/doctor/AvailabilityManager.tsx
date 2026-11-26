@@ -887,7 +887,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
       {activeTab === "leaves" && (
         <div className="space-y-6">
           <p className="text-xs text-[#64748B]">
-            Register personal, medical, or conference leaves. mediVerse automatically checks for conflicting confirmed appointments and warns you immediately.
+            Register personal, medical, or conference leaves. Healvia automatically checks for conflicting confirmed appointments and warns you immediately.
           </p>
 
           <form onSubmit={handleAddLeaveSubmit} className="p-4 rounded-2xl bg-[#F5F9FC] border border-[#20B8AD]/30 space-y-3">

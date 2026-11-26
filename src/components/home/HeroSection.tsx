@@ -122,7 +122,7 @@ export const HeroSection: React.FC = () => {
                       &ldquo;Every step towards understanding your health is a step towards a healthier tomorrow.&rdquo;
                     </p>
                     <p className="text-[10px] font-serif font-bold uppercase tracking-wider text-[#20B8AD]">
-                      MEDIVERSE CARE PHILOSOPHY
+                      HEALVIA CARE PHILOSOPHY
                     </p>
                   </div>
                 </div>

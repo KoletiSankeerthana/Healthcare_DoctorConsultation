@@ -278,7 +278,7 @@ def create_payment_order(
         # Discounts: Optional validated promo code discount
         discount_code = (payload.get("coupon_code") or "").strip().upper()
         discount_amount = 0.0
-        if discount_code in ("MEDIVERSE10", "WELCOME10"):
+        if discount_code in ("HEALVIA10", "MEDIVERSE10", "WELCOME10"):
             discount_amount = round(subtotal * 0.10, 2) # 10% discount
         elif discount_code in ("HEALTHFIRST", "FIRSTFREE"):
             discount_amount = min(subtotal, 100.0) # Flat Rs 100 off

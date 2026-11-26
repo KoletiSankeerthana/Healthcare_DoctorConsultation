@@ -512,6 +512,212 @@ def reset_password(token: str, new_password: str) -> Dict[str, Any]:
         db.close()
 
 
+def request_password_reset_otp(email: str, role: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Generates a 6-digit numeric OTP for password recovery with 10-minute expiry.
+    Enforces account and role matching for strict patient/doctor account isolation.
+    """
+    clean_email = normalize_email(email)
+    if not clean_email or "@" not in clean_email:
+        return {"success": False, "error": "Please enter a valid email address."}
+
+    db = SessionLocal()
+    try:
+        query = db.query(User).filter_by(email=clean_email)
+        if role:
+            query = query.filter_by(role=role.lower())
+        user = query.first()
+
+        if not user:
+            role_label = f" {role.lower()}" if role else ""
+            return {
+                "success": False,
+                "error": f"No registered{role_label} account found matching '{clean_email}'. Please check your email or account role."
+            }
+
+        # Generate cryptographically secure 6-digit numeric OTP
+        otp = f"{secrets.randbelow(900000) + 100000}"
+
+        # Invalidate previous unused reset tokens for this user
+        db.query(PasswordResetToken).filter_by(user_id=user.id, used=False).update({"used": True})
+
+        # Save new OTP valid for 10 minutes
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        prt = PasswordResetToken(
+            id=f"prt-{uuid.uuid4().hex[:12]}",
+            user_id=user.id,
+            token=f"otp:{otp}",
+            expires_at=expires_at,
+            used=False,
+            created_at=datetime.utcnow()
+        )
+        db.add(prt)
+        db.commit()
+
+        return {
+            "success": True,
+            "otp": otp,
+            "email": user.email,
+            "user_name": user.full_name,
+            "role": user.role,
+            "expires_in_minutes": 10
+        }
+    finally:
+        db.close()
+
+
+def verify_password_reset_otp(email: str, role: Optional[str], otp: str) -> Dict[str, Any]:
+    """
+    Verifies the 6-digit OTP code against the database.
+    If valid, marks the OTP as used and issues an authenticated one-time reset token.
+    """
+    clean_email = normalize_email(email)
+    clean_otp = (otp or "").strip()
+
+    if not clean_otp or len(clean_otp) != 6:
+        return {"success": False, "error": "Please enter a valid 6-digit verification code."}
+
+    db = SessionLocal()
+    try:
+        query = db.query(User).filter_by(email=clean_email)
+        if role:
+            query = query.filter_by(role=role.lower())
+        user = query.first()
+
+        if not user:
+            return {"success": False, "error": "Account not found for verification."}
+
+        now = datetime.utcnow()
+        prt = db.query(PasswordResetToken).filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.token.in_([f"otp:{clean_otp}", clean_otp]),
+            PasswordResetToken.used == False,
+            PasswordResetToken.expires_at > now
+        ).order_by(PasswordResetToken.created_at.desc()).first()
+
+        if not prt:
+            return {"success": False, "error": "Invalid or expired verification code. Please check your code or request a new one."}
+
+        # Mark OTP token as consumed
+        prt.used = True
+
+        # Issue secure one-time reset token valid for 15 minutes
+        reset_token = secrets.token_urlsafe(32)
+        reset_prt = PasswordResetToken(
+            id=f"prt-{uuid.uuid4().hex[:12]}",
+            user_id=user.id,
+            token=reset_token,
+            expires_at=datetime.utcnow() + timedelta(minutes=15),
+            used=False,
+            created_at=datetime.utcnow()
+        )
+        db.add(reset_prt)
+        db.commit()
+
+        return {
+            "success": True,
+            "reset_token": reset_token,
+            "email": user.email,
+            "user_name": user.full_name,
+            "role": user.role
+        }
+    finally:
+        db.close()
+
+
+def reset_password_with_token(reset_token: str, new_password: str) -> Dict[str, Any]:
+    """
+    Validates password strength, consumes reset token, hashes password, and revokes active sessions.
+    """
+    valid_pw, pw_err = validate_password_strength(new_password)
+    if not valid_pw:
+        return {"success": False, "error": pw_err}
+
+    db = SessionLocal()
+    try:
+        now = datetime.utcnow()
+        prt = db.query(PasswordResetToken).filter(
+            PasswordResetToken.token == reset_token,
+            PasswordResetToken.used == False,
+            PasswordResetToken.expires_at > now
+        ).first()
+
+        if not prt:
+            return {"success": False, "error": "Your password reset session has expired or is invalid. Please request a new verification code."}
+
+        user = db.query(User).filter_by(id=prt.user_id).first()
+        if not user:
+            return {"success": False, "error": "User account not found."}
+
+        # Update password hash
+        user.password_hash = hash_password(new_password)
+        prt.used = True
+
+        # Invalidate all existing user sessions for security
+        db.query(UserSession).filter_by(user_id=user.id).update({"is_revoked": True})
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "Your password has been successfully reset. You can now log in.",
+            "role": user.role,
+            "email": user.email
+        }
+    finally:
+        db.close()
+
+
+def change_user_password(identifier: str, current_password: str, new_password: str) -> Dict[str, Any]:
+    """
+    Changes a logged-in user's password after verifying their current password.
+    Identifier can be user_id or email address.
+    Enforces minimum 8 characters, hashes with bcrypt, and updates user credentials.
+    """
+    clean_id = (identifier or "").strip()
+    if not clean_id:
+        return {"success": False, "error": "User identifier is required."}
+
+    if not current_password:
+        return {"success": False, "error": "Please enter your current password."}
+
+    valid_pw, pw_err = validate_password_strength(new_password)
+    if not valid_pw:
+        return {"success": False, "error": pw_err}
+
+    db = SessionLocal()
+    try:
+        user = None
+        if clean_id.startswith("usr-"):
+            user = db.query(User).filter_by(id=clean_id).first()
+        if not user:
+            user = db.query(User).filter_by(email=clean_id.lower()).first()
+
+        if not user:
+            return {"success": False, "error": "Account not found."}
+
+        # Verify current password
+        if not verify_password(current_password, user.password_hash):
+            return {"success": False, "error": "Your current password is incorrect. Please verify and retry."}
+
+        # Prevent reusing exact same password
+        if verify_password(new_password, user.password_hash):
+            return {"success": False, "error": "New password cannot be identical to your current password."}
+
+        # Update password hash
+        user.password_hash = hash_password(new_password)
+        db.commit()
+
+        return {
+            "success": True,
+            "message": "Your password has been changed successfully.",
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role
+        }
+    finally:
+        db.close()
+
+
 # =============================================================================
 # 6. SEED ESSENTIAL ACCOUNTS (ADMIN, SAMPLE DOCTOR, SAMPLE PATIENT)
 # =============================================================================
@@ -558,8 +764,8 @@ def seed_default_accounts():
             )
             db.add(doc_user)
 
-        # 3. Sample Patient (Aditya Vardhan / pat-101)
-        patient_email = "aditya.vardhan@gmail.com"
+        # 3. Sample Patient (Keerthana / pat-101)
+        patient_email = "sankeerthana2905@gmail.com"
         pat_user = db.query(User).filter_by(email=patient_email).first()
         if not pat_user:
             pat_user = User(
@@ -568,7 +774,7 @@ def seed_default_accounts():
                 phone="+919876543210",
                 password_hash=hash_password("PatientPassword@123"),
                 role="patient",
-                full_name="Aditya Vardhan",
+                full_name="Keerthana",
                 is_active=True,
                 is_verified=True,
                 created_at=datetime.utcnow()
@@ -581,11 +787,11 @@ def seed_default_accounts():
                 pat_profile = PatientProfile(
                     id="pat-101",
                     user_id=pat_user.id,
-                    full_name="Aditya Vardhan",
+                    full_name="Keerthana",
                     email=patient_email,
                     phone="+919876543210",
                     date_of_birth="1988-05-14",
-                    gender="Male",
+                    gender="Female",
                     address="42 Green Glen Layout, Bellandur, Bengaluru",
                     blood_group="O+",
                     allergies=["Penicillin"],

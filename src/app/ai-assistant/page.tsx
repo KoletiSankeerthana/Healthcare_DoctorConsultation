@@ -857,18 +857,8 @@ function AIAssistantContent() {
               <button
                 type="button"
                 onClick={() => {
-                  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F9FC] flex items-center justify-center py-16">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#258FE5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-serif text-[#526A82]">Verifying secure patient session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
+                  if (authLoading) return;
+                  if (!isAuthenticated) {
                     setAuthGateOpen(true);
                     return;
                   }
@@ -891,7 +881,7 @@ function AIAssistantContent() {
           <div className="relative z-10 max-w-3xl space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-[#F5F9FC] border border-white/20">
               <Sparkles className="w-3.5 h-3.5 text-[#20B8AD]" />
-              MediVerse Clinical Health Guidance v3.0
+              Healvia Clinical Health Guidance v3.0
             </div>
             <h1 className="text-3xl sm:text-4xl font-serif font-normal text-white tracking-tight">
               AI Symptom Assessment, Health Guidance & Nearby Specialists
@@ -916,88 +906,7 @@ function AIAssistantContent() {
               ].map((st) => {
                 const isActive = guidedStep === st.num;
                 const isPast = guidedStep > st.num;
-                
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F9FC] flex items-center justify-center py-16">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#258FE5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-serif text-[#526A82]">Verifying secure patient session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[85vh] bg-[#EDF5FA] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-[#D5E4EF] p-8 sm:p-10 shadow-luxury text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#258FE5]/10 to-[#20B8AD]/20 border border-[#20B8AD]/40 flex items-center justify-center mx-auto text-[#258FE5] shadow-xs">
-            <Sparkles className="w-8 h-8 text-[#20B8AD]" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCECF8] text-[#123D68] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#20B8AD]" />
-              <span>Authentication Required</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-[#163B63] font-normal tracking-tight">
-              Sign in to continue with your healthcare journey.
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-serif leading-relaxed font-light">
-              AI Health Assistant &amp; Clinical Triage requires an authenticated patient account to provide personalized medical evaluations, safeguard your health history, and connect with verified specialists.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#EDF5FA] border border-[#D5E4EF] text-left space-y-2 text-xs text-[#526A82] font-serif">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Personalized symptom evaluation &amp; triage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Protected medical history &amp; encrypted consultations</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Direct access to verified doctor appointment booking</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <Link
-              href="/login?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center bg-[#258FE5] hover:bg-[#1D78C4] text-white font-serif font-semibold text-sm shadow-md"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Sign In to Existing Account
-              </Button>
-            </Link>
-
-            <Link
-              href="/register?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full justify-center border-2 border-[#258FE5] text-[#123D68] hover:bg-[#EDF5FA] font-serif font-semibold text-sm"
-              >
-                Create Free Account
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+                return (
                   <button
                     key={st.num}
                     type="button"
@@ -1133,88 +1042,7 @@ function AIAssistantContent() {
                   <div className="flex flex-wrap gap-2">
                     {dynamicSuggestions.map((sug) => {
                       const isSelected = selectedSymptoms.includes(sug.label);
-                      
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F9FC] flex items-center justify-center py-16">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#258FE5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-serif text-[#526A82]">Verifying secure patient session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[85vh] bg-[#EDF5FA] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-[#D5E4EF] p-8 sm:p-10 shadow-luxury text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#258FE5]/10 to-[#20B8AD]/20 border border-[#20B8AD]/40 flex items-center justify-center mx-auto text-[#258FE5] shadow-xs">
-            <Sparkles className="w-8 h-8 text-[#20B8AD]" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCECF8] text-[#123D68] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#20B8AD]" />
-              <span>Authentication Required</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-[#163B63] font-normal tracking-tight">
-              Sign in to continue with your healthcare journey.
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-serif leading-relaxed font-light">
-              AI Health Assistant &amp; Clinical Triage requires an authenticated patient account to provide personalized medical evaluations, safeguard your health history, and connect with verified specialists.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#EDF5FA] border border-[#D5E4EF] text-left space-y-2 text-xs text-[#526A82] font-serif">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Personalized symptom evaluation &amp; triage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Protected medical history &amp; encrypted consultations</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Direct access to verified doctor appointment booking</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <Link
-              href="/login?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center bg-[#258FE5] hover:bg-[#1D78C4] text-white font-serif font-semibold text-sm shadow-md"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Sign In to Existing Account
-              </Button>
-            </Link>
-
-            <Link
-              href="/register?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full justify-center border-2 border-[#258FE5] text-[#123D68] hover:bg-[#EDF5FA] font-serif font-semibold text-sm"
-              >
-                Create Free Account
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+                      return (
                         <button
                           key={sug.id}
                           type="button"
@@ -1859,7 +1687,7 @@ function AIAssistantContent() {
                     <p>No verified doctor found within {radiusUsed} km. Try choosing another locality or expanding to city-wide.</p>
                     <Link href="/doctors">
                       <Button variant="outline" size="sm" className="text-xs">
-                        Browse All MediVerse Doctors
+                        Browse All Healvia Doctors
                       </Button>
                     </Link>
                   </div>
@@ -2101,88 +1929,7 @@ function AIAssistantContent() {
                         <div className="grid grid-cols-3 gap-1.5">
                           {groupedDynamicSlots.morning.map((slot, idx) => {
                             const isSel = selectedDynamicSlot?.start_time === slot.start_time;
-                            
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F9FC] flex items-center justify-center py-16">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#258FE5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-serif text-[#526A82]">Verifying secure patient session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[85vh] bg-[#EDF5FA] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-[#D5E4EF] p-8 sm:p-10 shadow-luxury text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#258FE5]/10 to-[#20B8AD]/20 border border-[#20B8AD]/40 flex items-center justify-center mx-auto text-[#258FE5] shadow-xs">
-            <Sparkles className="w-8 h-8 text-[#20B8AD]" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCECF8] text-[#123D68] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#20B8AD]" />
-              <span>Authentication Required</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-[#163B63] font-normal tracking-tight">
-              Sign in to continue with your healthcare journey.
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-serif leading-relaxed font-light">
-              AI Health Assistant &amp; Clinical Triage requires an authenticated patient account to provide personalized medical evaluations, safeguard your health history, and connect with verified specialists.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#EDF5FA] border border-[#D5E4EF] text-left space-y-2 text-xs text-[#526A82] font-serif">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Personalized symptom evaluation &amp; triage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Protected medical history &amp; encrypted consultations</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Direct access to verified doctor appointment booking</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <Link
-              href="/login?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center bg-[#258FE5] hover:bg-[#1D78C4] text-white font-serif font-semibold text-sm shadow-md"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Sign In to Existing Account
-              </Button>
-            </Link>
-
-            <Link
-              href="/register?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full justify-center border-2 border-[#258FE5] text-[#123D68] hover:bg-[#EDF5FA] font-serif font-semibold text-sm"
-              >
-                Create Free Account
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+                            return (
                               <button
                                 key={`morn-${idx}`}
                                 type="button"
@@ -2213,88 +1960,7 @@ function AIAssistantContent() {
                         <div className="grid grid-cols-3 gap-1.5">
                           {groupedDynamicSlots.afternoon.map((slot, idx) => {
                             const isSel = selectedDynamicSlot?.start_time === slot.start_time;
-                            
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F9FC] flex items-center justify-center py-16">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#258FE5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-serif text-[#526A82]">Verifying secure patient session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[85vh] bg-[#EDF5FA] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-[#D5E4EF] p-8 sm:p-10 shadow-luxury text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#258FE5]/10 to-[#20B8AD]/20 border border-[#20B8AD]/40 flex items-center justify-center mx-auto text-[#258FE5] shadow-xs">
-            <Sparkles className="w-8 h-8 text-[#20B8AD]" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCECF8] text-[#123D68] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#20B8AD]" />
-              <span>Authentication Required</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-[#163B63] font-normal tracking-tight">
-              Sign in to continue with your healthcare journey.
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-serif leading-relaxed font-light">
-              AI Health Assistant &amp; Clinical Triage requires an authenticated patient account to provide personalized medical evaluations, safeguard your health history, and connect with verified specialists.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#EDF5FA] border border-[#D5E4EF] text-left space-y-2 text-xs text-[#526A82] font-serif">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Personalized symptom evaluation &amp; triage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Protected medical history &amp; encrypted consultations</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Direct access to verified doctor appointment booking</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <Link
-              href="/login?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center bg-[#258FE5] hover:bg-[#1D78C4] text-white font-serif font-semibold text-sm shadow-md"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Sign In to Existing Account
-              </Button>
-            </Link>
-
-            <Link
-              href="/register?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full justify-center border-2 border-[#258FE5] text-[#123D68] hover:bg-[#EDF5FA] font-serif font-semibold text-sm"
-              >
-                Create Free Account
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+                            return (
                               <button
                                 key={`aft-${idx}`}
                                 type="button"
@@ -2325,88 +1991,7 @@ function AIAssistantContent() {
                         <div className="grid grid-cols-3 gap-1.5">
                           {groupedDynamicSlots.evening.map((slot, idx) => {
                             const isSel = selectedDynamicSlot?.start_time === slot.start_time;
-                            
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F9FC] flex items-center justify-center py-16">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-3 border-[#258FE5] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-serif text-[#526A82]">Verifying secure patient session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-[85vh] bg-[#EDF5FA] flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-[#D5E4EF] p-8 sm:p-10 shadow-luxury text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#258FE5]/10 to-[#20B8AD]/20 border border-[#20B8AD]/40 flex items-center justify-center mx-auto text-[#258FE5] shadow-xs">
-            <Sparkles className="w-8 h-8 text-[#20B8AD]" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#DCECF8] text-[#123D68] text-xs font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#20B8AD]" />
-              <span>Authentication Required</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-[#163B63] font-normal tracking-tight">
-              Sign in to continue with your healthcare journey.
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-serif leading-relaxed font-light">
-              AI Health Assistant &amp; Clinical Triage requires an authenticated patient account to provide personalized medical evaluations, safeguard your health history, and connect with verified specialists.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-[#EDF5FA] border border-[#D5E4EF] text-left space-y-2 text-xs text-[#526A82] font-serif">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Personalized symptom evaluation &amp; triage</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Protected medical history &amp; encrypted consultations</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#20B8AD] shrink-0" />
-              <span>Direct access to verified doctor appointment booking</span>
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-2">
-            <Link
-              href="/login?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center bg-[#258FE5] hover:bg-[#1D78C4] text-white font-serif font-semibold text-sm shadow-md"
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Sign In to Existing Account
-              </Button>
-            </Link>
-
-            <Link
-              href="/register?redirect=/ai-assistant"
-              className="block w-full"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full justify-center border-2 border-[#258FE5] text-[#123D68] hover:bg-[#EDF5FA] font-serif font-semibold text-sm"
-              >
-                Create Free Account
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+                            return (
                               <button
                                 key={`eve-${idx}`}
                                 type="button"

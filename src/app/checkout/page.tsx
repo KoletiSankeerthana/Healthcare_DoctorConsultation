@@ -80,8 +80,8 @@ function CheckoutContent() {
   const [loadingDoc, setLoadingDoc] = useState(true);
 
   // Patient Info
-  const [patientName, setPatientName] = useState("Aditya Vardhan");
-  const [patientEmail, setPatientEmail] = useState("patient@mediverse.org");
+  const [patientName, setPatientName] = useState("Keerthana");
+  const [patientEmail, setPatientEmail] = useState("sankeerthana2905@gmail.com");
   const [patientPhone, setPatientPhone] = useState("+91 98401 23456");
 
   // Pricing & Coupon
@@ -177,7 +177,7 @@ function CheckoutContent() {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
 
-    if (code === "WELCOME10" || code === "MEDIVERSE10") {
+    if (code === "WELCOME10" || code === "HEALVIA10" || code === "MEDIVERSE10") {
       const disc = Math.round(subtotal * 0.1);
       setDiscountAmount(disc);
       setAppliedCoupon(code);
@@ -290,7 +290,7 @@ function CheckoutContent() {
       // If developer test placeholder or sandbox mode, we can launch the gateway simulator directly
       // or attempt official checkout.js if live test key is present
       if (isDefaultTestPlaceholder) {
-        console.info("[Checkout] Default Test Mode detected. Opening MediVerse Gateway Simulator.");
+        console.info("[Checkout] Default Test Mode detected. Opening Healvia Gateway Simulator.");
         setSimulatedOrderData(orderData);
         setShowSimulatorModal(true);
         setPaymentState("PAYMENT_PENDING");
@@ -305,7 +305,7 @@ function CheckoutContent() {
         orderId: orderData.razorpay_order_id,
         amountPaise: orderData.amount_paise,
         currency: orderData.currency || "INR",
-        name: "MediVerse Healthcare",
+        name: "Healvia Healthcare",
         description: `Consultation with ${doctor.name}`,
         prefill: {
           name: patientName,
@@ -619,7 +619,7 @@ function CheckoutContent() {
                     {doctor.name}
                   </h3>
                   <p className="text-xs text-[#526A82]">
-                    {doctor.specialty} • {doctor.clinic?.name || "MediVerse Health"}
+                    {doctor.specialty} • {doctor.clinic?.name || "Healvia Health"}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-[#EAF5FC] flex items-center justify-center text-[#258FE5]">
@@ -886,7 +886,7 @@ function CheckoutContent() {
                   <span>Razorpay PCI-DSS Level 1 Compliant</span>
                 </div>
                 <p className="text-center text-[10px] text-[#94A3B8]">
-                  By proceeding, you authorize MediVerse to process this payment for the scheduled consultation. Full refund available up to 24 hours prior to appointment time.
+                  By proceeding, you authorize Healvia to process this payment for the scheduled consultation. Full refund available up to 24 hours prior to appointment time.
                 </p>
               </div>
             </div>

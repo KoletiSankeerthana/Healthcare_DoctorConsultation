@@ -151,12 +151,12 @@ export async function openRazorpayCheckout(
       key: options.keyId,
       amount: options.amountPaise,
       currency: options.currency || "INR",
-      name: options.name || "MediVerse Healthcare",
+      name: options.name || "Healvia Healthcare",
       description: options.description || "Healthcare Consultation Fee",
       order_id: options.orderId,
       prefill: {
         name: options.prefill?.name || "Valued Patient",
-        email: options.prefill?.email || "patient@mediverse.org",
+        email: options.prefill?.email || "patient@healvia.com",
         contact: options.prefill?.contact || "+91 98401 23456"
       },
       notes: options.notes || {},

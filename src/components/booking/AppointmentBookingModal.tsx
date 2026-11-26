@@ -330,7 +330,7 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
         orderId: orderData.razorpay_order_id,
         amountPaise: orderData.amount_paise,
         currency: orderData.currency,
-        name: "MediVerse Healthcare",
+        name: "Healvia Healthcare",
         description: `Consultation with ${doctor.name}`,
         prefill: {
           name: bookingPayload.patient_name,

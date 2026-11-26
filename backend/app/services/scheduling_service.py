@@ -33,6 +33,7 @@ from backend.app.db.models import (
     DoctorNotification,
     PatientNotification,
     EmailNotificationLog,
+    PatientProfile,
     User
 )
 
@@ -1144,13 +1145,38 @@ def book_appointment_atomic(payload: Dict[str, Any]) -> Dict[str, Any]:
         start_time = payload.get("start_time") # e.g. "10:00"
         end_time = payload.get("end_time") # e.g. "10:30"
         consult_type = payload.get("type", "online")
-        patient_name = payload.get("patient_name", "Registered Patient")
-        patient_email = payload.get("patient_email", "patient@example.com")
-        patient_phone = payload.get("patient_phone", "+91 98765 43210")
+        patient_name = payload.get("patient_name")
+        patient_email = payload.get("patient_email")
+        patient_phone = payload.get("patient_phone")
         patient_id = payload.get("patient_id", "pt-101")
         symptoms = payload.get("symptoms", "")
         notes = payload.get("notes", "")
         hold_id = payload.get("hold_id")
+
+        # Resolve patient profile dynamically from DB if name or email not supplied
+        pat_db = db.query(PatientProfile).filter(
+            (PatientProfile.id == patient_id) | (PatientProfile.user_id == patient_id)
+        ).first()
+        if not pat_db:
+            pat_user = db.query(User).filter_by(id=patient_id).first()
+            if pat_user:
+                if not patient_name:
+                    patient_name = pat_user.full_name
+                if not patient_email:
+                    patient_email = pat_user.email
+                if not patient_phone and pat_user.phone:
+                    patient_phone = pat_user.phone
+        else:
+            if not patient_name:
+                patient_name = pat_db.full_name
+            if not patient_email:
+                patient_email = pat_db.email
+            if not patient_phone and pat_db.phone:
+                patient_phone = pat_db.phone
+
+        patient_name = patient_name or "Registered Patient"
+        patient_email = patient_email or "sankeerthana2905@gmail.com"
+        patient_phone = patient_phone or "+91 98765 43210"
 
         # 1. Date Validation
         now_kolkata = get_now_kolkata()

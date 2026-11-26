@@ -136,9 +136,9 @@ async function start() {
 
     // Node-level file watcher for Python backend hot reload (100% stable on Windows)
     try {
-      const backendDir = path.join(projectRoot, "backend");
-      if (fs.existsSync(backendDir)) {
-        fs.watch(backendDir, { recursive: true }, (eventType, filename) => {
+      const backendAppDir = path.join(projectRoot, "backend", "app");
+      if (fs.existsSync(backendAppDir)) {
+        fs.watch(backendAppDir, { recursive: true }, (eventType, filename) => {
           if (filename && filename.endsWith(".py") && !filename.includes("__pycache__")) {
             if (restartDebounceTimer) clearTimeout(restartDebounceTimer);
             restartDebounceTimer = setTimeout(() => {
@@ -161,26 +161,32 @@ async function start() {
   }
 
   // Launch Next.js frontend on localhost:3000
-  console.log("\x1b[34m[Next.js :3000] Starting Next.js Dev Server on http://localhost:3000...\x1b[0m");
-  frontendProcess = spawn(npxCmd, ["next", "dev", "-p", "3000"], {
-    cwd: projectRoot,
-    shell: true,
-    stdio: ["inherit", "pipe", "pipe"]
-  });
+  function spawnFrontend() {
+    if (isShuttingDown) return;
+    console.log("\x1b[34m[Next.js :3000] Starting Next.js Dev Server on http://localhost:3000...\x1b[0m");
+    frontendProcess = spawn(npxCmd, ["next", "dev", "-p", "3000"], {
+      cwd: projectRoot,
+      shell: true,
+      stdio: ["ignore", "pipe", "pipe"]
+    });
 
-  frontendProcess.stdout?.on("data", (data) => {
-    process.stdout.write(`\x1b[34m[Next.js :3000]\x1b[0m ${data}`);
-  });
+    frontendProcess.stdout?.on("data", (data) => {
+      process.stdout.write(`\x1b[34m[Next.js :3000]\x1b[0m ${data}`);
+    });
 
-  frontendProcess.stderr?.on("data", (data) => {
-    process.stderr.write(`\x1b[35m[Next.js :3000]\x1b[0m ${data}`);
-  });
+    frontendProcess.stderr?.on("data", (data) => {
+      process.stderr.write(`\x1b[35m[Next.js :3000]\x1b[0m ${data}`);
+    });
 
-  frontendProcess.on("exit", (code) => {
-    if (!isShuttingDown) {
-      console.log(`\x1b[31m[Next.js :3000] Frontend exited with code ${code}.\x1b[0m`);
-    }
-  });
+    frontendProcess.on("exit", (code) => {
+      if (!isShuttingDown) {
+        console.log(`\x1b[31m[Next.js :3000] Frontend exited with code ${code}. Restarting...\x1b[0m`);
+        setTimeout(spawnFrontend, 1500);
+      }
+    });
+  }
+
+  spawnFrontend();
 }
 
 function cleanup() {

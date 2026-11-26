@@ -1,6 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
-title MediVerse Healthcare - FastAPI Backend API (Port 8000)
+title HEALVIA Healthcare - FastAPI Backend API (Port 8000)
 
 :: Navigate to project root if executed from within backend/
 if exist "..\backend\app\main.py" (
@@ -9,7 +9,7 @@ if exist "..\backend\app\main.py" (
 
 echo.
 echo ===============================================================================
-echo   MediVerse Healthcare Platform - FastAPI Backend Server
+echo   HEALVIA Healthcare Platform - FastAPI Backend Server
 echo ===============================================================================
 echo.
 

@@ -131,7 +131,7 @@ export default function DoctorProfilePage() {
             Physician Profile Unavailable
           </h2>
           <p className="text-xs sm:text-sm text-[#526A82] leading-relaxed">
-            This doctor profile is currently undergoing credential verification, is temporarily deactivated, or does not exist. MediVerse strictly restricts public consultation access to verified, council-registered medical practitioners.
+            This doctor profile is currently undergoing credential verification, is temporarily deactivated, or does not exist. Healvia strictly restricts public consultation access to verified, council-registered medical practitioners.
           </p>
         </div>
         <div className="pt-2">

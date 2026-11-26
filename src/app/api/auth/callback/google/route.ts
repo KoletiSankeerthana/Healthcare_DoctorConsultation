@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   const successHtml = renderHtmlResponse({
     success: true,
     title: "Gmail OAuth 2.0 Connected",
-    message: "MediVerse Healthcare Sanctuary is now authorized to send verified emails via Gmail API.",
+    message: "Healvia Healthcare Platform is now authorized to send verified emails via Gmail API.",
     accountEmail: result.accountEmail || "Admin Gmail Account",
     detail: "Authorization scope: https://www.googleapis.com/auth/gmail.send"
   });
@@ -91,7 +91,7 @@ function renderHtmlResponse(options: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} | MediVerse Healthcare Sanctuary</title>
+  <title>${title} | Healvia Healthcare Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">

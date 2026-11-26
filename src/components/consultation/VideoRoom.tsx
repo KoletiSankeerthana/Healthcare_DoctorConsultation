@@ -48,7 +48,7 @@ export const VideoRoom: React.FC<VideoRoomProps> = ({
   // Role can be switched in UI for testing/demo
   const [userRole, setUserRole] = useState<"doctor" | "patient">(initialRole);
   const [userName, setUserName] = useState(
-    initialUserName || (initialRole === "doctor" ? "Dr. Arvind Swaminathan" : "Aditya Vardhan")
+    initialUserName || (initialRole === "doctor" ? "Dr. Arvind Swaminathan" : "Keerthana")
   );
   const [userId, setUserId] = useState(initialUserId || (initialRole === "doctor" ? "doc-1" : "pt-101"));
 
@@ -404,7 +404,7 @@ export const VideoRoom: React.FC<VideoRoomProps> = ({
   const switchRole = (newRole: "doctor" | "patient") => {
     if (userRole === newRole) return;
     setUserRole(newRole);
-    setUserName(newRole === "doctor" ? (sessionData?.doctor_name || "Dr. Arvind Swaminathan") : (sessionData?.patient_name || "Aditya Vardhan"));
+    setUserName(newRole === "doctor" ? (sessionData?.doctor_name || "Dr. Arvind Swaminathan") : (sessionData?.patient_name || "Keerthana"));
     setUserId(newRole === "doctor" ? (sessionData?.doctor_id || "doc-1") : (sessionData?.patient_id || "usr-pat-101"));
   };
 
@@ -562,7 +562,7 @@ export const VideoRoom: React.FC<VideoRoomProps> = ({
                 <p className="text-xs text-gray-400 font-light leading-relaxed">
                   {userRole === "patient"
                     ? `Dr. ${sessionData?.doctor_name || "Arvind Swaminathan"} has been notified and will enter shortly.`
-                    : `Patient ${sessionData?.patient_name || "Aditya Vardhan"} is scheduled for this consultation slot.`}
+                    : `Patient ${sessionData?.patient_name || "Keerthana"} is scheduled for this consultation slot.`}
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-gray-900/80 border border-gray-800 text-[11px] text-gray-400 flex items-center justify-center gap-2">

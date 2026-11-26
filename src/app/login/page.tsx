@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { Button } from "@/components/ui/Button";
@@ -32,14 +33,17 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const handleDemoSelect = (selectedRole: "patient" | "doctor" | "admin", doctorType?: "venkatesh" | "arvind") => {
+  const handleDemoSelect = (selectedRole: "patient" | "doctor" | "admin", doctorType?: "venkatesh" | "arvind" | "sankeerthana") => {
     setRole(selectedRole);
     setError("");
     if (selectedRole === "patient") {
-      setIdentifier("aditya.vardhan@gmail.com");
+      setIdentifier("sankeerthana2905@gmail.com");
       setPassword("PatientPassword@123");
     } else if (selectedRole === "doctor") {
-      if (doctorType === "arvind") {
+      if (doctorType === "sankeerthana") {
+        setIdentifier("koletisankeerthana@gmail.com");
+        setPassword("DoctorPassword@123");
+      } else if (doctorType === "arvind") {
         setIdentifier("dr.arvind@apexheart.in");
         setPassword("DoctorPassword@123");
       } else {
@@ -110,13 +114,25 @@ function LoginForm() {
       <div className="max-w-md w-full space-y-7">
         {/* Minimal Luxury Logo & Header */}
         <div className="text-center space-y-3">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-[#163B63] flex items-center justify-center text-[#DCE6EF] shadow-subtle">
-              <span className="font-serif text-xl italic font-normal">H</span>
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-subtle border border-[#D5E4EF] shrink-0">
+              <Image
+                src={BRAND.logo}
+                alt={`${BRAND.displayName} Logo`}
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
-            <span className="text-2xl font-serif font-normal text-[#163B63]">
-              {BRAND.name}
-            </span>
+            <div className="flex flex-col text-left">
+              <span className="text-2xl font-serif font-normal text-[#163B63] leading-tight">
+                {BRAND.displayName}
+              </span>
+              <span className="text-[10px] uppercase font-sans tracking-[0.16em] text-[#20B8AD] font-semibold">
+                {BRAND.tagline}
+              </span>
+            </div>
           </Link>
           <h2 className="text-2xl sm:text-3xl font-serif font-normal text-[#163B63]">
             Sign in to your sanctuary
@@ -190,12 +206,12 @@ function LoginForm() {
                 type="button"
                 onClick={() => handleDemoSelect("patient")}
                 className={`py-1.5 px-2 rounded-lg text-[11px] font-medium border text-center transition-all ${
-                  role === "patient" && identifier === "aditya.vardhan@gmail.com"
+                  role === "patient" && identifier === "sankeerthana2905@gmail.com"
                     ? "bg-[#258FE5] text-white border-[#258FE5]"
                     : "bg-white text-[#163B63] border-[#D5E4EF] hover:bg-[#EAF5FC]"
                 }`}
               >
-                Patient (Aditya)
+                Patient (Keerthana)
               </button>
               <button
                 type="button"
@@ -230,6 +246,17 @@ function LoginForm() {
               >
                 Admin Demo
               </button>
+              <button
+                type="button"
+                onClick={() => handleDemoSelect("doctor", "sankeerthana")}
+                className={`py-1.5 px-2 rounded-lg text-[11px] font-medium border text-center transition-all col-span-2 ${
+                  role === "doctor" && identifier === "koletisankeerthana@gmail.com"
+                    ? "bg-[#258FE5] text-white border-[#258FE5]"
+                    : "bg-white text-[#163B63] border-[#D5E4EF] hover:bg-[#EAF5FC]"
+                }`}
+              >
+                Dr. Sankeerthana (Demo)
+              </button>
             </div>
           </div>
 
@@ -242,8 +269,8 @@ function LoginForm() {
                 role === "doctor"
                   ? "dr.arvind@apexheart.in"
                   : role === "admin"
-                  ? "admin@mediverse.org"
-                  : "aditya.vardhan@gmail.com"
+                  ? "admin@healvia.com"
+                  : "keerthana@gmail.com"
               }
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
@@ -296,7 +323,7 @@ function LoginForm() {
                 />
                 <span>Keep me signed in</span>
               </label>
-              <Link href="/forgot-password" className="text-[#258FE5] hover:underline cursor-pointer">
+              <Link href={`/forgot-password?role=${role}`} className="text-[#258FE5] hover:underline cursor-pointer">
                 Forgot password?
               </Link>
             </div>

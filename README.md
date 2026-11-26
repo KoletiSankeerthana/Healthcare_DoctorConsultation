@@ -1,4 +1,6 @@
-# Healthcare — Modern Luxury Digital Healthcare Platform
+# HEALVIA — AI-Powered Healthcare and Doctor Consultation Platform
+
+**Your Path to Better Health.**
 
 A complete architectural and visual redesign into a sophisticated, luxury digital healthcare platform combining the refined human-centered care of luxury wellness brands, contemporary medical technology, and minimalist editorial design.
 

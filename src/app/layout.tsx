@@ -6,17 +6,32 @@ import { BRAND } from "@/lib/brand";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: `${BRAND.name} — Modern Luxury Digital Healthcare & Doctor Consultation`,
-  description: BRAND.description,
+  title: `${BRAND.displayName} — ${BRAND.tagline}`,
+  description: `${BRAND.description} Access verified doctors, manage digital health records, and receive intelligent healthcare guidance with ${BRAND.name}.`,
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/images/healvia-icon.png", type: "image/png" }
+    ],
+    apple: "/images/healvia-icon.png"
+  },
   keywords: [
-    "luxury digital healthcare",
-    "doctor consultation India",
-    "telehealth sanctuary",
+    "Healvia",
+    "HEALVIA healthcare",
+    "doctor consultation",
+    "telehealth platform",
     "verified specialists",
-    "online prescription",
-    "AI health assistant",
-    "modern medical technology",
+    "AI healthcare assistant",
+    "digital health sanctuary",
+    "medical records",
+    "online doctor appointment"
   ],
+  openGraph: {
+    title: `${BRAND.displayName} — ${BRAND.tagline}`,
+    description: BRAND.description,
+    images: [{ url: "/images/healvia-logo.png" }],
+    siteName: BRAND.name,
+  }
 };
 
 export default function RootLayout({

@@ -78,7 +78,7 @@ export default function AboutPage() {
       name: "Council-Verified Doctor Registry",
       tag: "100% Medical Council Audited",
       description:
-        "Every physician practicing on MediVerse undergoes automated registration number verification against State Medical Councils and the National Medical Commission (NMC) before consultations are enabled.",
+        "Every physician practicing on Healvia undergoes automated registration number verification against State Medical Councils and the National Medical Commission (NMC) before consultations are enabled.",
       icon: ShieldCheck
     },
     {
@@ -127,7 +127,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EAF5FC] border border-[#20B8AD] text-xs font-semibold text-[#163B63] mb-6">
             <Sparkles className="w-3.5 h-3.5 text-[#20B8AD]" />
-            About MediVerse • Healthcare Digital Sanctuary
+            About Healvia • Healthcare Digital Sanctuary
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-normal text-[#163B63] tracking-tight leading-[1.15] max-w-4xl">
@@ -160,7 +160,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Why We Built MediVerse: The Core Problems We Solve */}
+      {/* Why We Built Healvia: The Core Problems We Solve */}
       <section className="py-20 bg-[#F5F9FC]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="max-w-2xl">
@@ -171,7 +171,7 @@ export default function AboutPage() {
               The Realities of Modern Healthcare
             </h2>
             <p className="text-sm text-[#526A82] mt-2 leading-relaxed">
-              Every day, millions of individuals struggle with clinical complexity, long waitlists, and fragmented records. MediVerse was built specifically to dismantle these hurdles.
+              Every day, millions of individuals struggle with clinical complexity, long waitlists, and fragmented records. Healvia was built specifically to dismantle these hurdles.
             </p>
           </div>
 
@@ -251,7 +251,7 @@ export default function AboutPage() {
               Patient-First Experience
             </span>
             <h2 className="text-2xl sm:text-4xl font-serif text-[#163B63]">
-              How You Benefit From MediVerse
+              How You Benefit From Healvia
             </h2>
             <p className="text-xs sm:text-sm text-[#526A82]">
               Designed to support you at every milestone of your health journey.

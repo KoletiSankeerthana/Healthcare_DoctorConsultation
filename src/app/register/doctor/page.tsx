@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { SPECIALTIES } from "@/data/specialties";
@@ -498,19 +499,31 @@ export default function DoctorRegisterPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-[#163B63] flex items-center justify-center text-[#20B8AD] shadow-subtle">
-              <span className="font-serif text-xl italic font-normal">H</span>
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-subtle border border-[#DCE6EF] shrink-0">
+              <Image
+                src={BRAND.logo}
+                alt={`${BRAND.displayName} Logo`}
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
+                priority
+              />
             </div>
-            <span className="text-2xl font-serif font-normal text-[#163B63]">
-              {BRAND.name}
-            </span>
+            <div className="flex flex-col text-left">
+              <span className="text-2xl font-serif font-normal text-[#163B63] leading-tight">
+                {BRAND.displayName}
+              </span>
+              <span className="text-[10px] uppercase font-sans tracking-[0.16em] text-[#20B8AD] font-semibold">
+                {BRAND.tagline}
+              </span>
+            </div>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-serif font-normal text-[#163B63]">
             Doctor Registration
           </h1>
           <p className="text-xs sm:text-sm text-[#64748B] font-light max-w-xl mx-auto">
-            Register as a medical practitioner on MediVerse. Please enter your professional details and upload your credentials for administrative review.
+            Register as a medical practitioner on {BRAND.displayName}. Please enter your professional details and upload your credentials for administrative review.
           </p>
         </div>
 

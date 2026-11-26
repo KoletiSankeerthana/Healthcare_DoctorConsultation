@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { BRAND } from "@/lib/brand";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -34,7 +35,8 @@ import {
   ArrowRight,
   User,
   Phone,
-  RefreshCw
+  RefreshCw,
+  KeyRound
 } from "lucide-react";
 
 interface DoctorData {
@@ -189,7 +191,7 @@ function DoctorDashboardContent() {
             id: item.id,
             patientName: item.patient_name || "Patient Consultation",
             patientPhone: item.patient_phone || "+91 98401 23456",
-            patientEmail: item.patient_email || "patient@mediverse.com",
+            patientEmail: item.patient_email || "patient@healvia.com",
             patientAge: 38,
             patientGender: "M",
             reason: item.symptoms || "Scheduled Medical Evaluation",
@@ -284,9 +286,11 @@ function DoctorDashboardContent() {
 
         {/* Practitioner Portal Switcher Banner */}
         <div className="p-3.5 rounded-2xl bg-white border border-[#D5E4EF] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-[#258FE5] font-semibold">
-            <Stethoscope className="w-4 h-4 text-[#258FE5]" />
-            <span>Active Practitioner Portal: <strong>{currentDoctor.name}</strong></span>
+          <div className="flex items-center gap-2.5 text-[#258FE5] font-semibold">
+            <div className="relative w-6 h-6 rounded-full overflow-hidden border border-[#D5E4EF] flex-shrink-0 bg-white">
+              <Image src={BRAND.logo} alt={BRAND.displayName} fill className="object-contain" />
+            </div>
+            <span>{BRAND.displayName} Practitioner Sanctuary: <strong>{currentDoctor.name}</strong></span>
             <span className="font-mono text-[10px] bg-[#F1EFE7] px-2 py-0.5 rounded text-[#244C3B] border border-[#9CAF96]/30">
               {currentDoctor.id}
             </span>
@@ -356,6 +360,19 @@ function DoctorDashboardContent() {
 
           {/* Profile Status & Notifications */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            {/* Account Settings & Password Button */}
+            <Link href="/account/settings">
+              <Button
+                variant="outline"
+                size="md"
+                className="w-full sm:w-auto border-[#CBD5E1] text-[#163B63] hover:bg-[#F5F9FC] font-medium text-xs flex items-center gap-1.5"
+                title="Account Settings & Security"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-[#258FE5]" />
+                <span>Security &amp; Password</span>
+              </Button>
+            </Link>
+
             {/* Notification Bell */}
             <div className="relative self-end sm:self-center">
               <Button

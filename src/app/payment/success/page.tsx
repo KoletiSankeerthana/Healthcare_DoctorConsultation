@@ -102,7 +102,7 @@ function PaymentSuccessContent() {
               Payment Successful!
             </h1>
             <p className="text-xs text-[#64748B] mt-1">
-              Your appointment booking and payment have been confirmed on MediVerse.
+              Your appointment booking and payment have been confirmed on Healvia.
             </p>
           </div>
 

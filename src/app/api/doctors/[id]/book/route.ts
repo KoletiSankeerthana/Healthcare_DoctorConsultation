@@ -42,11 +42,13 @@ export async function POST(
       );
     }
 
-    // Trigger Gmail confirmation & notification asynchronously
+    // Trigger Gmail confirmation & notification
     if (res.appointment) {
-      sendAppointmentConfirmationEmails(res.appointment).catch((e) => {
+      try {
+        await sendAppointmentConfirmationEmails(res.appointment);
+      } catch (e) {
         console.error("Non-fatal: Email dispatch failed after confirmed booking:", e);
-      });
+      }
     }
 
     return NextResponse.json(res, { status: 201 });

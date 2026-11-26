@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   User,
   MapPin,
@@ -20,9 +20,11 @@ import {
   Calendar,
   Activity,
   Plus,
-  X
+  X,
+  KeyRound
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { ChangePasswordForm } from "@/components/auth/ChangePasswordForm";
 
 interface PatientProfileData {
   id?: string;
@@ -79,8 +81,9 @@ const COMMON_CONDITIONS = [
   "Heart Disease"
 ];
 
-export default function PatientProfilePage() {
+function PatientProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -148,6 +151,14 @@ export default function PatientProfilePage() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams?.get("tab");
+    const step = searchParams?.get("step");
+    if (tab === "security" || tab === "password" || step === "5") {
+      setCurrentStep(5);
+    }
+  }, [searchParams]);
 
   const fetchProfile = async () => {
     setIsLoading(true);
@@ -330,12 +341,13 @@ export default function PatientProfilePage() {
 
         {/* Progress Stepper */}
         <div className="bg-white p-6 rounded-3xl border border-[#D5E4EF] shadow-subtle">
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 text-center">
             {[
               { num: 1, title: "Personal Info", desc: "Demographics & DOB" },
               { num: 2, title: "Address & GPS", desc: "Locality & Coordinates" },
               { num: 3, title: "Clinical History", desc: "Allergies & Conditions" },
-              { num: 4, title: "Review & Save", desc: "Confirmation" }
+              { num: 4, title: "Review & Save", desc: "Confirmation" },
+              { num: 5, title: "Account Security", desc: "Change Password" }
             ].map((step) => {
               const isActive = currentStep === step.num;
               const isPast = currentStep > step.num;
@@ -939,16 +951,47 @@ export default function PatientProfilePage() {
                     <Button variant="ghost" size="md" leftIcon={<ArrowLeft className="w-4 h-4" />} onClick={() => setCurrentStep(3)}>
                       Back to Edit
                     </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="md"
+                        onClick={() => setCurrentStep(5)}
+                      >
+                        Account Security &rarr;
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="md"
+                        leftIcon={<Save className="w-4 h-4" />}
+                        className="bg-[#258FE5] hover:bg-[#163B63]"
+                        onClick={handleSaveProfile}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? "Saving Profile..." : "Save Patient Health Profile"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 5: ACCOUNT SECURITY & CHANGE PASSWORD */}
+              {currentStep === 5 && (
+                <div className="space-y-6">
+                  <ChangePasswordForm userRole="patient" />
+                  <div className="pt-4 flex items-center justify-between border-t border-[#D5E4EF]">
                     <Button
-                      variant="primary"
+                      variant="ghost"
                       size="md"
-                      leftIcon={<Save className="w-4 h-4" />}
-                      className="bg-[#258FE5] hover:bg-[#163B63]"
-                      onClick={handleSaveProfile}
-                      disabled={isSaving}
+                      leftIcon={<ArrowLeft className="w-4 h-4" />}
+                      onClick={() => setCurrentStep(4)}
                     >
-                      {isSaving ? "Saving Profile..." : "Save Patient Health Profile"}
+                      Back to Review
                     </Button>
+                    <Link href="/patient/dashboard">
+                      <Button variant="outline" size="md">
+                        Return to Dashboard
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               )}
@@ -957,5 +1000,19 @@ export default function PatientProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PatientProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#EDF5FA] flex items-center justify-center py-20 font-serif">
+          <div className="w-8 h-8 border-2 border-[#258FE5] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <PatientProfileContent />
+    </Suspense>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { BRAND } from "@/lib/brand";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
@@ -434,21 +435,31 @@ export default function AdminDashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white p-8 rounded-[32px] border border-[#D5E4EF] shadow-subtle">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#258FE5]">
-                Clinical Governance & Platform Operations
-              </span>
-              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#123D68] text-white font-semibold">
-                Super Admin Access
-              </span>
+          <div className="flex items-start gap-4">
+            <div className="relative w-14 h-14 rounded-full overflow-hidden border border-[#D5E4EF] shadow-xs flex-shrink-0 bg-white">
+              <Image
+                src={BRAND.logo}
+                alt={BRAND.displayName}
+                fill
+                className="object-contain p-0.5"
+              />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#163B63]">
-              Doctor Verification & Approvals
-            </h1>
-            <p className="text-xs sm:text-sm text-[#526A82] font-light">
-              Independent audit of physician council credentials, state registries, degree authenticity, and practice licenses.
-            </p>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#258FE5]">
+                  {BRAND.displayName} Clinical Governance & Platform Operations
+                </span>
+                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#123D68] text-white font-semibold">
+                  Super Admin Access
+                </span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#163B63]">
+                Doctor Verification & Approvals
+              </h1>
+              <p className="text-xs sm:text-sm text-[#526A82] font-light">
+                Independent audit of physician council credentials, state registries, degree authenticity, and practice licenses.
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">

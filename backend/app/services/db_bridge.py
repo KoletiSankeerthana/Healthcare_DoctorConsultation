@@ -73,7 +73,11 @@ from backend.app.services.auth_service import (
     get_user_by_session as auth_get_user_by_session,
     logout_user as auth_logout_user,
     request_password_reset as auth_request_password_reset,
-    reset_password as auth_reset_password
+    reset_password as auth_reset_password,
+    request_password_reset_otp as auth_request_password_reset_otp,
+    verify_password_reset_otp as auth_verify_password_reset_otp,
+    reset_password_with_token as auth_reset_password_with_token,
+    change_user_password as auth_change_user_password
 )
 
 from backend.app.services.document_service import (
@@ -1330,6 +1334,30 @@ if __name__ == "__main__":
             payload_str = sys.stdin.read()
             payload = json.loads(payload_str)
             res = auth_reset_password(payload.get("token", ""), payload.get("new_password", ""))
+            print(json.dumps(res))
+        elif action == "auth_request_password_reset_otp":
+            payload_str = sys.stdin.read()
+            payload = json.loads(payload_str)
+            res = auth_request_password_reset_otp(payload.get("email", ""), payload.get("role"))
+            print(json.dumps(res))
+        elif action == "auth_verify_password_reset_otp":
+            payload_str = sys.stdin.read()
+            payload = json.loads(payload_str)
+            res = auth_verify_password_reset_otp(payload.get("email", ""), payload.get("role"), payload.get("otp", ""))
+            print(json.dumps(res))
+        elif action == "auth_reset_password_with_token":
+            payload_str = sys.stdin.read()
+            payload = json.loads(payload_str)
+            res = auth_reset_password_with_token(payload.get("reset_token", ""), payload.get("new_password", ""))
+            print(json.dumps(res))
+        elif action == "auth_change_password":
+            payload_str = sys.stdin.read()
+            payload = json.loads(payload_str)
+            res = auth_change_user_password(
+                payload.get("identifier") or payload.get("user_id") or payload.get("email", ""),
+                payload.get("current_password", ""),
+                payload.get("new_password", "")
+            )
             print(json.dumps(res))
 
         # --- PERSISTENT MEDICAL DOCUMENT DISPATCHER ---

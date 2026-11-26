@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { BRAND } from "@/lib/brand";
 import { ShieldCheck, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
 
@@ -22,20 +23,26 @@ export const Footer: React.FC = () => {
           {/* Brand Info */}
           <div className="lg:col-span-5 space-y-5">
             <Link href="/" className="inline-flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#258FE5] flex items-center justify-center text-white border border-white/20">
-                <span className="font-serif text-xl font-normal italic">H</span>
+              <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white border border-white/20 shrink-0">
+                <Image
+                  src={BRAND.logo}
+                  alt={`${BRAND.displayName} Logo`}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-serif font-normal tracking-tight text-white">
-                  {BRAND.name}
+                  {BRAND.displayName}
                 </span>
-                <span className="text-[10px] tracking-[0.2em] font-sans font-semibold text-[#20B8AD] uppercase">
-                  Digital Sanctuary
+                <span className="text-[10px] tracking-[0.16em] font-sans font-semibold text-[#20B8AD] uppercase">
+                  {BRAND.tagline}
                 </span>
               </div>
             </Link>
             <p className="text-sm text-[#EAF5FC]/80 leading-relaxed max-w-md font-light">
-              Care that feels personal. Healthcare that moves forward. An intelligent ecosystem uniting discerning patients, distinguished physicians, and clinical safety.
+              {BRAND.fullDescription}
             </p>
             <div className="pt-2 space-y-2.5 text-xs text-[#EAF5FC]/80">
               <div className="flex items-center gap-2.5">
@@ -155,7 +162,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#EAF5FC]/70 gap-4">
-          <p>© {new Date().getFullYear()} {BRAND.name} Platform Inc. All rights reserved. Designed for Modern Luxury Digital Healthcare.</p>
+          <p>© {new Date().getFullYear()} {BRAND.displayName} Platform Inc. All rights reserved. {BRAND.tagline}</p>
           <div className="flex items-center gap-2 text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-[#20B8AD]" />
             <span>Encrypted • Verified Practitioners • Human-Centered Care</span>

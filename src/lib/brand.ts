@@ -1,13 +1,20 @@
 /**
  * Centralized Brand Configuration
- * Modern Luxury Digital Healthcare - Premium Ocean Blue & Turquoise Theme
+ * HEALVIA — AI-Powered Healthcare and Doctor Consultation Platform
+ * Visual Identity: Modern Healthcare, Healing, Trust & Connectivity
  */
 export const BRAND = {
-  name: "Healthcare",
-  shortName: "Healthcare",
-  tagline: "Care that feels personal. Healthcare that moves forward.",
-  description:
-    "Discover trusted doctors, access intelligent health guidance and experience a more connected way to manage your wellbeing.",
+  name: "Healvia",
+  displayName: "HEALVIA",
+  shortName: "Healvia",
+  tagline: "Your Path to Better Health.",
+  description: "AI-Powered Healthcare and Doctor Consultation Platform.",
+  fullDescription:
+    "Healvia represents a connected healthcare ecosystem where patients can access verified doctors, manage digital health records, receive AI-assisted healthcare guidance, and book consultations seamlessly.",
+  logo: "/images/healvia-logo.png",
+  icon: "/images/healvia-icon.png",
+  symbol: "/images/healvia-symbol.png",
+  favicon: "/favicon.ico",
   palette: {
     deepOceanBlue: "#123D68",
     oceanBlue: "#258FE5",
@@ -35,7 +42,7 @@ export const BRAND = {
     secondaryText: "#526A82",
     borders: "#D5E4EF",
   },
-  supportEmail: "concierge@healthcare.local",
+  supportEmail: "care@healvia.com",
   supportPhone: "+91 (800) 422-7360",
   emergencyNote:
     "For emergency medical situations, please call local emergency services (112 or 108 in India) immediately.",
@@ -46,7 +53,7 @@ export const BRAND = {
     specialties: "/#specialties",
     onlineConsultation: "/#online-consultation",
     aiAssistant: "/ai-assistant",
-    aboutUs: "/#about",
+    aboutUs: "/about",
     login: "/login",
     register: "/register",
     doctorRegister: "/register/doctor",

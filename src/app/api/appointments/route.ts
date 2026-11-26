@@ -57,11 +57,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trigger Gmail confirmation & notification asynchronously; failure will not undo booking
+    // Trigger Gmail confirmation & notification; failure will not undo booking
     if (res.appointment) {
-      sendAppointmentConfirmationEmails(res.appointment).catch((e) => {
+      try {
+        await sendAppointmentConfirmationEmails(res.appointment);
+      } catch (e) {
         console.error("Non-fatal: Email dispatch failed after confirmed booking:", e);
-      });
+      }
     }
 
     return NextResponse.json(res, { status: 201 });

@@ -24,7 +24,7 @@ export const AIAssistantSection: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
-          
+
           {/* Left Text Column: AI Capabilities */}
           <div className="lg:col-span-6 space-y-7">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-serif font-semibold text-[#DCECF8]">
@@ -130,7 +130,7 @@ export const AIAssistantSection: React.FC = () => {
           {/* Right Column: Interactive Chat & Diagnostic Interface Preview */}
           <div className="lg:col-span-6">
             <div className="rounded-[32px] bg-white/10 backdrop-blur-md border border-white/20 p-6 sm:p-8 shadow-2xl relative space-y-5">
-              
+
               {/* Card Header */}
               <div className="flex items-center justify-between pb-4 border-b border-white/15">
                 <div className="flex items-center gap-3">

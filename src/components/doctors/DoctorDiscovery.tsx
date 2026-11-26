@@ -249,9 +249,8 @@ export const DoctorDiscovery: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Filter Sidebar */}
           <aside
-            className={`lg:col-span-4 xl:col-span-3 rounded-3xl bg-white border border-[#D5E4EF] p-6 shadow-subtle space-y-6 ${
-              mobileFilterOpen ? "block" : "hidden lg:block"
-            }`}
+            className={`lg:col-span-4 xl:col-span-3 rounded-3xl bg-white border border-[#D5E4EF] p-6 shadow-subtle space-y-6 ${mobileFilterOpen ? "block" : "hidden lg:block"
+              }`}
           >
             <div className="flex items-center justify-between pb-3.5 border-b border-[#D5E4EF]">
               <div className="flex items-center gap-2">
@@ -285,11 +284,10 @@ export const DoctorDiscovery: React.FC = () => {
                     key={item.value}
                     type="button"
                     onClick={() => setConsultType(item.value as any)}
-                    className={`py-2 px-2 rounded-xl text-xs font-medium border text-center transition-all ${
-                      consultType === item.value
-                        ? "bg-[#258FE5] text-white border-[#258FE5] font-semibold"
-                        : "bg-white text-[#526A82] border-[#D5E4EF] hover:border-[#D5E4EF]"
-                    }`}
+                    className={`py-2 px-2 rounded-xl text-xs font-medium border text-center transition-all ${consultType === item.value
+                      ? "bg-[#258FE5] text-white border-[#258FE5] font-semibold"
+                      : "bg-white text-[#526A82] border-[#D5E4EF] hover:border-[#D5E4EF]"
+                      }`}
                   >
                     {item.label}
                   </button>
@@ -332,11 +330,10 @@ export const DoctorDiscovery: React.FC = () => {
                     key={exp}
                     type="button"
                     onClick={() => setExperienceFilter(exp)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border text-center transition-colors ${
-                      experienceFilter === exp
-                        ? "bg-[#258FE5] text-white border-[#258FE5]"
-                        : "bg-white text-[#526A82] border-[#D5E4EF] hover:border-[#D5E4EF]"
-                    }`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border text-center transition-colors ${experienceFilter === exp
+                      ? "bg-[#258FE5] text-white border-[#258FE5]"
+                      : "bg-white text-[#526A82] border-[#D5E4EF] hover:border-[#D5E4EF]"
+                      }`}
                   >
                     {exp === 0 ? "All" : `${exp}+y`}
                   </button>
@@ -385,11 +382,10 @@ export const DoctorDiscovery: React.FC = () => {
                     key={item.label}
                     type="button"
                     onClick={() => setMinRatingFilter(item.val)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border text-center transition-colors ${
-                      minRatingFilter === item.val
-                        ? "bg-[#258FE5] text-white border-[#258FE5]"
-                        : "bg-white text-[#526A82] border-[#D5E4EF] hover:border-[#D5E4EF]"
-                    }`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border text-center transition-colors ${minRatingFilter === item.val
+                      ? "bg-[#258FE5] text-white border-[#258FE5]"
+                      : "bg-white text-[#526A82] border-[#D5E4EF] hover:border-[#D5E4EF]"
+                      }`}
                   >
                     {item.label}
                   </button>

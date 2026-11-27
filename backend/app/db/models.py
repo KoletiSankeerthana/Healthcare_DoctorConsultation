@@ -13,7 +13,10 @@ from sqlalchemy import (
     JSON
 )
 from sqlalchemy.orm import relationship
-from backend.app.db.database import Base
+try:
+    from backend.app.db.database import Base
+except ImportError:
+    from app.db.database import Base
 
 class MedicalDocument(Base):
     __tablename__ = "medical_documents"

@@ -40,7 +40,22 @@ except ImportError:
     from app.api.v1.patient import router as patient_router
 
 # Initialize database schema tables
+print(f"[Healvia Database] Initializing schema tables on {settings.DATABASE_URL}...")
+if settings.DATABASE_URL.startswith("sqlite") and ":memory:" not in settings.DATABASE_URL:
+    try:
+        raw_url = settings.DATABASE_URL
+        if raw_url.startswith("sqlite:////"):
+            db_file_path = Path("/" + raw_url[11:])
+        elif raw_url.startswith("sqlite:///"):
+            db_file_path = Path(raw_url[10:])
+        else:
+            db_file_path = Path(raw_url[9:])
+        db_file_path.parent.mkdir(parents=True, exist_ok=True)
+    except Exception as dir_err:
+        print(f"[Healvia Database Warning] Pre-init dir check: {dir_err}")
+
 Base.metadata.create_all(bind=engine)
+print("[Healvia Database] Base schema tables verified and ready.")
 
 # Ensure new columns on existing SQLite tables
 from sqlalchemy import text

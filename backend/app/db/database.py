@@ -32,18 +32,14 @@ if settings.DATABASE_URL.startswith("sqlite"):
             else:
                 db_path = Path(raw_url[9:])
             db_path.parent.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            print(f"[Healvia Database Warning] Pre-engine directory creation note: {e}")
+        except Exception:
+            pass
 
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=connect_args,
     pool_pre_ping=True
 )
-
-print(f"[Healvia Database] Initialized SQLAlchemy Engine with URL: {settings.DATABASE_URL}")
-if settings.DATABASE_URL.startswith("sqlite") and "/var/data" not in settings.DATABASE_URL:
-    print("[Healvia Database Notice] Running on container/local storage. To persist SQLite across Render redeployments, attach a Render Persistent Disk and set SQLITE_DB_PATH (e.g. /var/data/healthcare_records.db).")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

@@ -17,7 +17,24 @@ export function callDbBridge<T = any>(action: string, args: string[] = [], stdin
     }
     const result = spawnSync(pythonBin, cmdArgs, opts);
     if (result.status === 0 && result.stdout) {
-      return JSON.parse(result.stdout.trim()) as T;
+      const rawOutput = result.stdout.trim();
+      try {
+        return JSON.parse(rawOutput) as T;
+      } catch {
+        // Fallback: extract JSON line if stdout was prepended with warnings or logs
+        const lines = rawOutput.split("\n").map((l) => l.trim()).filter(Boolean);
+        for (let i = lines.length - 1; i >= 0; i--) {
+          const line = lines[i];
+          if ((line.startsWith("{") && line.endsWith("}")) || (line.startsWith("[") && line.endsWith("]"))) {
+            try {
+              return JSON.parse(line) as T;
+            } catch {
+              // continue scanning
+            }
+          }
+        }
+        throw new Error(`Failed to parse db_bridge output: ${rawOutput.slice(0, 200)}`);
+      }
     }
     if (result.stderr) {
       console.error(`db_bridge stderr (${action}):`, result.stderr);

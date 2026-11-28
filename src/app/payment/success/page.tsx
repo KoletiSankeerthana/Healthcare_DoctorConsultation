@@ -58,7 +58,7 @@ function PaymentSuccessContent() {
   const apt = paymentData?.appointment;
 
   const orderRef = o?.order_reference || initialRef || "ORD-20261123-SUCCESS";
-  const txnId = p?.razorpay_payment_id || p?.id || "pay_verified_razorpay";
+  const txnId = p?.cf_payment_id || p?.razorpay_payment_id || p?.id || "pay_verified_cashfree";
   const amountPaid = p?.amount || o?.total_amount || 810.0;
   const paymentDate = p?.created_at ? new Date(p.created_at).toLocaleString("en-IN", {
     day: "numeric",

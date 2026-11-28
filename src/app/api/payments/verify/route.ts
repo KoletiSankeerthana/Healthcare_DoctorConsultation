@@ -13,32 +13,31 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const serverPaymentMode = getPaymentMode();
-    const isMock = body.payment_mode === "mock" || (serverPaymentMode === "mock" && !body.razorpay_signature);
+    const isMock = body.payment_mode === "mock" || (serverPaymentMode === "mock" && !body.cf_payment_id && !body.razorpay_signature);
 
     if (isMock) {
       if (serverPaymentMode !== "mock") {
         return NextResponse.json(
-          { error: "Mock payments are strictly prohibited when server is in razorpay mode or in production." },
+          { error: "Mock payments are strictly prohibited when server is in cashfree mode or in production." },
           { status: 400 }
         );
       }
-      if (!body.order_id && !body.razorpay_order_id) {
+      if (!body.order_id && !body.cf_order_id && !body.razorpay_order_id) {
         return NextResponse.json(
-          { error: "order_id or razorpay_order_id is required." },
+          { error: "order_id or cf_order_id is required." },
           { status: 400 }
         );
       }
-      // Ensure dummy transaction ID has TEST-PAY- prefix
-      if (!body.dummy_transaction_id && !body.razorpay_payment_id) {
+      if (!body.dummy_transaction_id && !body.cf_payment_id && !body.razorpay_payment_id) {
         body.dummy_transaction_id = generateDummyTransactionId();
       }
       body.payment_mode = "mock";
     } else {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
-      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-        console.warn("[Payment API] Missing required verification parameters in request body.");
+      const activeOrderId = body.cf_order_id || body.order_id || body.razorpay_order_id;
+      if (!activeOrderId) {
+        console.warn("[Payment API] Missing required Cashfree order identifier in verification request.");
         return NextResponse.json(
-          { error: "Missing required Razorpay cryptographic verification parameters." },
+          { error: "Missing required Cashfree order identifier." },
           { status: 400 }
         );
       }
@@ -46,15 +45,16 @@ export async function POST(request: NextRequest) {
 
     const payload = {
       ...body,
+      cf_order_id: body.cf_order_id || body.order_id || body.razorpay_order_id,
       user_id: user.id
     };
 
-    console.info(`[Payment API] Verifying payment: mode=${payload.payment_mode || "razorpay"}, order=${payload.order_id || payload.razorpay_order_id}`);
+    console.info(`[Payment API] Verifying Cashfree payment: mode=${payload.payment_mode || "cashfree"}, order=${payload.cf_order_id}`);
 
-    // 1. Try FastAPI backend over HTTP (< 5ms)
+    // 1. Try FastAPI backend over HTTP
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const fastApiRes = await fetch(`${BACKEND_URL}/payments/verify`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,19 +74,22 @@ export async function POST(request: NextRequest) {
           }
         }
         return NextResponse.json(data, { status: 200 });
+      } else {
+        const errData = await fastApiRes.json().catch(() => ({}));
+        console.warn(`[Payment API] FastAPI /payments/verify returned ${fastApiRes.status}:`, errData);
       }
-    } catch (e) {
-      // Backend offline; fall back to direct SQLite bridge
+    } catch (e: any) {
+      console.warn("[Payment API] FastAPI verify call failed or timed out, trying DB bridge fallback:", e.message);
     }
 
     // 2. Direct Python DB bridge fallback
     const result = callDbBridge("payment_verify", [user.id], payload);
 
     if (!result || !result.success) {
-      console.warn(`[Payment API] Signature verification failed: ${result?.error}`);
+      console.warn(`[Payment API] Payment verification failed via DB Bridge: ${result?.error}`);
       return NextResponse.json(
         {
-          error: result?.error || "Cryptographic signature verification failed. Payment cannot be verified.",
+          error: result?.error || "Payment verification failed with Cashfree gateway.",
           status: result?.status || "FAILED"
         },
         { status: 400 }

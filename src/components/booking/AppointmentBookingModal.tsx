@@ -7,7 +7,7 @@ import { Doctor } from "@/types";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { openRazorpayCheckout } from "@/lib/razorpay";
+import { openCashfreeCheckout } from "@/lib/cashfree";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Calendar as CalendarIcon,
@@ -115,7 +115,7 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmedApt, setConfirmedApt] = useState<any>(null);
   const [confirmedPayment, setConfirmedPayment] = useState<any | null>(null);
-  const [paymentMode, setPaymentMode] = useState<"mock" | "razorpay">("mock");
+  const [paymentMode, setPaymentMode] = useState<"mock" | "cashfree">("cashfree");
 
   // Load active payment mode from server configuration
   useEffect(() => {
@@ -303,7 +303,7 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             order_id: orderData.order_id,
-            razorpay_order_id: orderData.razorpay_order_id,
+            cf_order_id: orderData.cf_order_id,
             payment_mode: "mock",
             dummy_transaction_id: dummyTxnId,
             payment_method: paymentMethod || "mock",
@@ -324,77 +324,51 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
         return;
       }
 
-      // 2. Open official Razorpay Checkout SDK
-      const opened = await openRazorpayCheckout({
-        keyId: orderData.key_id,
-        orderId: orderData.razorpay_order_id,
-        amountPaise: orderData.amount_paise,
-        currency: orderData.currency,
-        name: "Healvia Healthcare",
-        description: `Consultation with ${doctor.name}`,
-        prefill: {
-          name: bookingPayload.patient_name,
-          email: bookingPayload.patient_email,
-          contact: bookingPayload.patient_phone
-        },
-        onSuccess: async (rzpResponse) => {
-          // 3. Cryptographically verify signature on backend
-          try {
-            const verifyRes = await fetch("/api/payments/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                order_id: orderData.order_id,
-                razorpay_order_id: rzpResponse.razorpay_order_id,
-                razorpay_payment_id: rzpResponse.razorpay_payment_id,
-                razorpay_signature: rzpResponse.razorpay_signature,
-                payment_method: paymentMethod,
-                booking_payload: bookingPayload
-              })
-            });
-
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok && verifyData.success) {
-              setConfirmedApt(verifyData.appointment);
-              setConfirmedPayment(verifyData.payment);
-              setStep("confirmed");
-              if (onBookingSuccess) onBookingSuccess(verifyData.appointment);
-            } else {
-              setBookingError(verifyData.error || "Payment verification failed.");
-            }
-          } catch (e: any) {
-            setBookingError("Error confirming payment verification: " + e.message);
-          } finally {
-            setIsSubmitting(false);
-          }
-        },
+      // 2. Open official Cashfree Checkout Modal
+      const checkoutResult = await openCashfreeCheckout({
+        paymentSessionId: orderData.payment_session_id,
+        environment: orderData.cashfree_environment || "sandbox",
+        redirectTarget: "_modal",
         onFailure: (err) => {
           setIsSubmitting(false);
-          setBookingError(err?.description || "Payment failed or was declined.");
-        },
-        onDismiss: () => {
-          setIsSubmitting(false);
+          setBookingError(err?.message || "Payment was declined or cancelled.");
         }
       });
 
-      // If Razorpay SDK couldn't load or fallback required, automatically complete atomic confirmation
-      if (!opened) {
-        const bookingRes = await fetch("/api/appointments", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(bookingPayload)
-        });
-        const bookData = await bookingRes.json();
-        if (bookingRes.ok && bookData.success) {
-          setConfirmedApt(bookData.appointment);
-          setStep("confirmed");
-          if (onBookingSuccess) onBookingSuccess(bookData.appointment);
-        } else {
-          setBookingError(bookData.error || "This slot is no longer available. Please choose another time.");
-          fetchSlots(selectedDate, consultType);
-          setStep("slot");
+      if (checkoutResult.success) {
+        // 3. Server-side verification with Cashfree APIs
+        try {
+          const verifyRes = await fetch("/api/payments/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_id: orderData.order_id,
+              cf_order_id: orderData.cf_order_id,
+              payment_session_id: orderData.payment_session_id,
+              payment_method: paymentMethod,
+              booking_payload: bookingPayload
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok && verifyData.success) {
+            setConfirmedApt(verifyData.appointment);
+            setConfirmedPayment(verifyData.payment);
+            setStep("confirmed");
+            if (onBookingSuccess) onBookingSuccess(verifyData.appointment);
+          } else {
+            setBookingError(verifyData.error || "Cashfree payment verification failed on server.");
+          }
+        } catch (e: any) {
+          setBookingError("Error confirming payment verification: " + e.message);
+        } finally {
+          setIsSubmitting(false);
         }
+      } else {
         setIsSubmitting(false);
+        if (checkoutResult.error) {
+          setBookingError(checkoutResult.error);
+        }
       }
     } catch (err: any) {
       // Fallback: Directly confirm appointment atomically via database
@@ -907,7 +881,7 @@ export const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = (
             ) : (
               <div className="p-3 rounded-xl bg-[#EAF5FC] border border-[#D5E4EF] text-[#163B63] text-[11px] flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-[#163B63] shrink-0" />
-                <span>Razorpay Telemedicine Payment Gateway Active • 100% Encrypted & Authenticated</span>
+                <span>Cashfree Telemedicine Payment Gateway Active • 100% Encrypted & Authenticated</span>
               </div>
             )}
 

@@ -1,12 +1,12 @@
 /**
  * Payment Configuration & Safety Guard System
- * MediVerse Healthcare Telemedicine Platform
+ * Healvia Healthcare Telemedicine Platform
  *
  * Provides server-side payment mode configuration, safety validation,
- * and test mock transaction generation.
+ * and test mock transaction generation for Cashfree Payments.
  */
 
-export type PaymentMode = "mock" | "razorpay";
+export type PaymentMode = "mock" | "cashfree";
 
 /**
  * Returns the currently active payment mode with strict production safety enforcement.
@@ -18,19 +18,19 @@ export function getPaymentMode(): PaymentMode {
     process.env.ENVIRONMENT === "production" ||
     process.env.VERCEL_ENV === "production";
 
-  const configuredMode = (process.env.PAYMENT_MODE || "mock").toLowerCase().trim();
+  const configuredMode = (process.env.PAYMENT_MODE || "cashfree").toLowerCase().trim();
 
   // Safety Requirement: Reject mock payments in production
   if (isProduction) {
     if (configuredMode === "mock") {
       console.warn(
-        "[SECURITY ALERT] PAYMENT_MODE=mock is strictly prohibited in production. Forcing real 'razorpay' mode."
+        "[SECURITY ALERT] PAYMENT_MODE=mock is strictly prohibited in production. Forcing real 'cashfree' mode."
       );
     }
-    return "razorpay";
+    return "cashfree";
   }
 
-  return configuredMode === "razorpay" ? "razorpay" : "mock";
+  return configuredMode === "mock" ? "mock" : "cashfree";
 }
 
 /**

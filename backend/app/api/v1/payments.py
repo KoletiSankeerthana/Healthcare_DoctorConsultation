@@ -1,7 +1,8 @@
 """
-FastAPI Payments Router (Razorpay Gateway)
-Provides REST endpoints for order creation, signature verification,
-webhook ingestion, real-time status polling, payment history, and refunds.
+FastAPI Payments Router (Cashfree Payments Gateway)
+Provides REST endpoints for order creation, payment session generation,
+server-side verification, webhook ingestion, real-time status polling,
+payment history, and authorized refunds.
 """
 
 from fastapi import APIRouter, Request, HTTPException, Depends, Header
@@ -16,7 +17,7 @@ from backend.app.services.payment_service import (
     process_payment_refund
 )
 
-router = APIRouter(prefix="/payments", tags=["Payments & Gateway"])
+router = APIRouter(prefix="/payments", tags=["Payments & Cashfree Gateway"])
 
 
 class CreateOrderRequest(BaseModel):
@@ -34,10 +35,15 @@ class CreateOrderRequest(BaseModel):
 
 class VerifyPaymentRequest(BaseModel):
     user_id: Optional[str] = "usr-pat-101"
-    razorpay_order_id: str
-    razorpay_payment_id: str
-    razorpay_signature: str
     order_id: Optional[str] = None
+    cf_order_id: Optional[str] = None
+    cf_payment_id: Optional[str] = None
+    payment_session_id: Optional[str] = None
+    # Compatibility fields for smooth migration
+    razorpay_order_id: Optional[str] = None
+    razorpay_payment_id: Optional[str] = None
+    razorpay_signature: Optional[str] = None
+    payment_mode: Optional[str] = None
     payment_method: Optional[str] = "upi"
     booking_payload: Optional[Dict[str, Any]] = None
 
@@ -51,8 +57,8 @@ class RefundRequest(BaseModel):
 @router.post("/create-order")
 async def create_order_endpoint(req: CreateOrderRequest):
     """
-    Creates a new payment order with server-calculated prices,
-    internal order & payment models, and Razorpay order ID.
+    Creates a new Cashfree payment order with server-calculated pricing,
+    internal order & payment models, and active payment_session_id.
     """
     res = create_payment_order(
         user_id=req.user_id or "usr-pat-101",
@@ -66,7 +72,7 @@ async def create_order_endpoint(req: CreateOrderRequest):
 @router.post("/verify")
 async def verify_payment_endpoint(req: VerifyPaymentRequest):
     """
-    Cryptographically verifies Razorpay payment signature (HMAC SHA-256)
+    Cryptographically verifies payment with Cashfree gateway APIs
     and atomically confirms associated healthcare booking.
     """
     res = verify_and_confirm_payment(
@@ -79,10 +85,15 @@ async def verify_payment_endpoint(req: VerifyPaymentRequest):
 
 
 @router.post("/webhook")
-async def webhook_endpoint(request: Request, x_razorpay_signature: Optional[str] = Header(None)):
+async def webhook_endpoint(
+    request: Request,
+    x_webhook_signature: Optional[str] = Header(None, alias="x-webhook-signature"),
+    x_webhook_timestamp: Optional[str] = Header(None, alias="x-webhook-timestamp"),
+    x_razorpay_signature: Optional[str] = Header(None, alias="x-razorpay-signature")
+):
     """
-    Ingests official Razorpay webhook events, verifies HMAC SHA256 signature
-    against the raw payload bytes, and processes state updates idempotently.
+    Ingests official Cashfree webhook events, validates HMAC SHA-256 signatures,
+    and updates payment & booking state machines with strict idempotency.
     """
     raw_body = await request.body()
     try:
@@ -90,10 +101,12 @@ async def webhook_endpoint(request: Request, x_razorpay_signature: Optional[str]
     except Exception:
         event_data = {}
 
+    sig_header = x_webhook_signature or x_razorpay_signature or ""
     res = process_webhook_event(
         raw_body=raw_body,
-        signature_header=x_razorpay_signature or "",
-        event_data=event_data
+        signature_header=sig_header,
+        event_data=event_data,
+        timestamp_header=x_webhook_timestamp
     )
 
     if not res.get("success") and res.get("status_code") == 400:
@@ -115,7 +128,7 @@ async def get_status_endpoint(payment_id: str, user_id: Optional[str] = "usr-pat
 @router.get("/history")
 async def get_history_endpoint(user_id: Optional[str] = "usr-pat-101", role: Optional[str] = "patient"):
     """
-    Retrieves verified payment history for authenticated patient or administrator.
+    Retrieves verified Cashfree payment history for authenticated patient or administrator.
     """
     return get_user_payment_history(user_id=user_id or "usr-pat-101", role=role or "patient")
 
@@ -123,7 +136,7 @@ async def get_history_endpoint(user_id: Optional[str] = "usr-pat-101", role: Opt
 @router.post("/{payment_id}/refund")
 async def refund_endpoint(payment_id: str, req: RefundRequest):
     """
-    Initiates an authorized payment refund through Razorpay and updates records.
+    Initiates an authorized payment refund through Cashfree and updates records.
     """
     res = process_payment_refund(
         payment_id=payment_id,

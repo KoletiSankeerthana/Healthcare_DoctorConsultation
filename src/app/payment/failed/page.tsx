@@ -60,7 +60,7 @@ function PaymentFailedContent() {
               Payment Failed
             </h1>
             <p className="text-xs text-[#64748B] mt-1">
-              We were unable to complete your payment with Razorpay.
+              We were unable to complete your payment with Cashfree.
             </p>
           </div>
 

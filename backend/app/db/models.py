@@ -985,14 +985,18 @@ class Payment(Base):
     user_id = Column(String(64), nullable=False, index=True)
     order_id = Column(String(64), nullable=True, index=True)
     booking_id = Column(String(64), nullable=True, index=True)
-    payment_mode = Column(String(32), default="razorpay") # "razorpay" or "mock"
+    payment_mode = Column(String(32), default="cashfree") # "cashfree" or "mock"
+    cf_order_id = Column(String(128), nullable=True, index=True)
+    cf_payment_id = Column(String(128), nullable=True, index=True)
+    payment_session_id = Column(String(512), nullable=True)
+    cf_refund_id = Column(String(128), nullable=True)
     razorpay_order_id = Column(String(128), nullable=True, index=True)
     razorpay_payment_id = Column(String(128), nullable=True, index=True)
     razorpay_signature = Column(String(256), nullable=True)
     amount = Column(Float, nullable=False) # In Rupees e.g. 750.0
     amount_paise = Column(Integer, nullable=False) # In Paise e.g. 75000
     currency = Column(String(16), default="INR")
-    payment_method = Column(String(32), default="upi") # "upi", "card", "netbanking", "wallet"
+    payment_method = Column(String(32), default="upi") # "upi", "card", "netbanking", "wallet", "app"
     payment_status = Column(String(32), default="CREATED", index=True) # CREATED, PENDING, PROCESSING, SUCCESS, FAILED, CANCELLED, REFUNDED
     signature_verified = Column(Boolean, default=False)
     webhook_event_ids = Column(JSON, default=list) # Array of webhook event IDs processed for idempotency
@@ -1005,6 +1009,9 @@ class Payment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def to_dict(self):
+        active_order_id = self.cf_order_id or self.razorpay_order_id or self.order_id
+        active_payment_id = self.cf_payment_id or self.razorpay_payment_id
+        active_refund_id = self.cf_refund_id or self.refund_id
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -1013,17 +1020,25 @@ class Payment(Base):
             "orderId": self.order_id,
             "booking_id": self.booking_id,
             "bookingId": self.booking_id,
-            "razorpay_order_id": self.razorpay_order_id,
-            "razorpayOrderId": self.razorpay_order_id,
-            "razorpay_payment_id": self.razorpay_payment_id,
-            "razorpayPaymentId": self.razorpay_payment_id,
+            "cf_order_id": self.cf_order_id or self.razorpay_order_id,
+            "cfOrderId": self.cf_order_id or self.razorpay_order_id,
+            "cf_payment_id": self.cf_payment_id or self.razorpay_payment_id,
+            "cfPaymentId": self.cf_payment_id or self.razorpay_payment_id,
+            "payment_session_id": self.payment_session_id,
+            "paymentSessionId": self.payment_session_id,
+            "cf_refund_id": active_refund_id,
+            "cfRefundId": active_refund_id,
+            "razorpay_order_id": active_order_id,
+            "razorpayOrderId": active_order_id,
+            "razorpay_payment_id": active_payment_id,
+            "razorpayPaymentId": active_payment_id,
             "amount": self.amount,
             "amount_paise": self.amount_paise,
             "currency": self.currency,
             "payment_method": self.payment_method,
             "paymentMethod": self.payment_method,
-            "payment_mode": self.payment_mode or "razorpay",
-            "paymentMode": self.payment_mode or "razorpay",
+            "payment_mode": self.payment_mode or "cashfree",
+            "paymentMode": self.payment_mode or "cashfree",
             "is_mock": (self.payment_mode == "mock"),
             "payment_status": self.payment_status,
             "paymentStatus": self.payment_status,
@@ -1037,7 +1052,7 @@ class Payment(Base):
             "refundAmount": self.refund_amount,
             "refund_status": self.refund_status,
             "refundStatus": self.refund_status,
-            "refund_id": self.refund_id,
+            "refund_id": active_refund_id,
             "notes": self.notes or {},
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
@@ -1053,7 +1068,7 @@ class Order(Base):
     order_reference = Column(String(64), unique=True, index=True) # e.g. ORD-20261123-XXXX
     user_id = Column(String(64), nullable=False, index=True)
     booking_id = Column(String(64), nullable=True, index=True)
-    payment_mode = Column(String(32), default="razorpay") # "razorpay" or "mock"
+    payment_mode = Column(String(32), default="cashfree") # "cashfree" or "mock"
     service_type = Column(String(64), default="doctor_consultation")
     items = Column(JSON, nullable=False, default=list) # [{ name, description, unit_price, quantity, subtotal, tax_amount }]
     subtotal = Column(Float, nullable=False, default=0.0)
@@ -1065,12 +1080,15 @@ class Order(Base):
     payment_status = Column(String(32), default="PENDING", index=True) # PENDING, PROCESSING, SUCCESS, FAILED, CANCELLED, REFUNDED
     order_status = Column(String(32), default="created", index=True) # created, confirmed, completed, cancelled
     payment_id = Column(String(64), nullable=True, index=True)
+    cf_order_id = Column(String(128), nullable=True, index=True)
+    payment_session_id = Column(String(512), nullable=True)
     razorpay_order_id = Column(String(128), nullable=True, index=True)
     metadata_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def to_dict(self):
+        active_cf_order_id = self.cf_order_id or self.razorpay_order_id
         return {
             "id": self.id,
             "order_reference": self.order_reference,
@@ -1089,8 +1107,8 @@ class Order(Base):
             "total_amount": self.total_amount,
             "totalAmount": self.total_amount,
             "currency": self.currency,
-            "payment_mode": self.payment_mode or "razorpay",
-            "paymentMode": self.payment_mode or "razorpay",
+            "payment_mode": self.payment_mode or "cashfree",
+            "paymentMode": self.payment_mode or "cashfree",
             "is_mock": (self.payment_mode == "mock"),
             "payment_status": self.payment_status,
             "paymentStatus": self.payment_status,
@@ -1098,8 +1116,12 @@ class Order(Base):
             "orderStatus": self.order_status,
             "payment_id": self.payment_id,
             "paymentId": self.payment_id,
-            "razorpay_order_id": self.razorpay_order_id,
-            "razorpayOrderId": self.razorpay_order_id,
+            "cf_order_id": active_cf_order_id,
+            "cfOrderId": active_cf_order_id,
+            "payment_session_id": self.payment_session_id,
+            "paymentSessionId": self.payment_session_id,
+            "razorpay_order_id": active_cf_order_id,
+            "razorpayOrderId": active_cf_order_id,
             "metadata": self.metadata_json or {},
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "createdAt": self.created_at.isoformat() if self.created_at else None,

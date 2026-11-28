@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BRAND } from "@/lib/brand";
 import { formatINR } from "@/lib/utils";
-import { openRazorpayCheckout } from "@/lib/razorpay";
+import { openCashfreeCheckout } from "@/lib/cashfree";
 import {
   ShieldCheck,
   CreditCard,
@@ -29,7 +29,7 @@ import {
 export type PaymentState =
   | "IDLE"
   | "CREATING_ORDER"
-  | "LOADING_RAZORPAY"
+  | "LOADING_CASHFREE"
   | "OPENING_CHECKOUT"
   | "PAYMENT_PENDING"
   | "VERIFYING_PAYMENT"
@@ -202,7 +202,7 @@ function CheckoutContent() {
     // Prevent duplicate clicks if already processing
     if (
       paymentState === "CREATING_ORDER" ||
-      paymentState === "LOADING_RAZORPAY" ||
+      paymentState === "LOADING_CASHFREE" ||
       paymentState === "OPENING_CHECKOUT" ||
       paymentState === "PAYMENT_PENDING" ||
       paymentState === "VERIFYING_PAYMENT"
@@ -266,88 +266,52 @@ function CheckoutContent() {
       createdOrderData = orderData;
       currentOrderDataRef.current = orderData;
 
-      // Step 1.5: If in Dummy / Mock Payment Mode, bypass Razorpay modal and confirm payment directly
+      // Step 1.5: If in Dummy / Mock Payment Mode, bypass modal and confirm payment directly
       if (orderData.payment_mode === "mock" || orderData.is_mock || paymentMode === "mock") {
         console.info("[Checkout] Dummy Payment Mode (PAYMENT_MODE=mock) detected. Completing dummy payment directly...");
         setPaymentState("VERIFYING_PAYMENT");
         const dummyTxnId = `TEST-PAY-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
         await verifyPaymentOnServer(orderData, {
-          razorpay_order_id: orderData.razorpay_order_id || `order_mock_${Date.now()}`,
-          razorpay_payment_id: dummyTxnId,
-          razorpay_signature: "mock_test_signature"
+          dummy_transaction_id: dummyTxnId,
+          payment_mode: "mock"
         });
         return;
       }
 
       // Step 2: Prepare Gateway Initialization
-      setPaymentState("LOADING_RAZORPAY");
+      setPaymentState("LOADING_CASHFREE");
 
-      const isDefaultTestPlaceholder =
-        !orderData.key_id ||
-        orderData.key_id.startsWith("rzp_test_mediverse") ||
-        orderData.key_id === "test";
-
-      // If developer test placeholder or sandbox mode, we can launch the gateway simulator directly
-      // or attempt official checkout.js if live test key is present
-      if (isDefaultTestPlaceholder) {
-        console.info("[Checkout] Default Test Mode detected. Opening Healvia Gateway Simulator.");
-        setSimulatedOrderData(orderData);
-        setShowSimulatorModal(true);
-        setPaymentState("PAYMENT_PENDING");
-        return;
-      }
-
-      // Step 3: Open Official Razorpay Checkout Modal
+      // Step 3: Open Official Cashfree Checkout Modal
       setPaymentState("OPENING_CHECKOUT");
 
-      const checkoutResult = await openRazorpayCheckout({
-        keyId: orderData.key_id,
-        orderId: orderData.razorpay_order_id,
-        amountPaise: orderData.amount_paise,
-        currency: orderData.currency || "INR",
-        name: "Healvia Healthcare",
-        description: `Consultation with ${doctor.name}`,
-        prefill: {
-          name: patientName,
-          email: patientEmail,
-          contact: patientPhone
-        },
-        notes: {
-          order_id: orderData.order_id,
-          order_reference: orderData.order_reference
-        },
-        onOpening: () => {
-          setPaymentState("OPENING_CHECKOUT");
-        },
-        onOpened: () => {
-          setPaymentState("PAYMENT_PENDING");
-        },
-        onSuccess: async (rzpResponse) => {
-          await verifyPaymentOnServer(orderData, rzpResponse);
-        },
+      const checkoutResult = await openCashfreeCheckout({
+        paymentSessionId: orderData.payment_session_id,
+        environment: orderData.cashfree_environment || "sandbox",
+        redirectTarget: "_modal",
         onFailure: (err) => {
           setPaymentState("PAYMENT_FAILED");
-          const reason = err?.description || err?.reason || "Payment was declined by issuing bank.";
+          const reason = err?.message || "Payment was declined by issuing bank.";
           setErrorMessage(reason);
-        },
-        onDismiss: () => {
-          setPaymentState("PAYMENT_CANCELLED");
-          setErrorMessage("Payment was dismissed. Your slot reservation remains valid — click Pay to retry.");
-        },
-        onInitError: (err) => {
-          console.warn("[Checkout] Official Razorpay modal init failed:", err.message);
+        }
+      });
+
+      if (checkoutResult.success) {
+        await verifyPaymentOnServer(orderData, {
+          order_id: orderData.order_id,
+          cf_order_id: orderData.cf_order_id,
+          payment_session_id: orderData.payment_session_id,
+          payment_method: selectedMethod
+        });
+      } else if (checkoutResult.error) {
+        if (checkoutResult.error === "SDK_NOT_LOADED") {
           // Fallback to Test Gateway Simulator so developer or user is never blocked
           setSimulatedOrderData(orderData);
           setShowSimulatorModal(true);
           setPaymentState("PAYMENT_PENDING");
+        } else {
+          setPaymentState("PAYMENT_FAILED");
+          setErrorMessage(checkoutResult.error);
         }
-      });
-
-      if (!checkoutResult.success && checkoutResult.reason === "SDK_NOT_LOADED") {
-        // Fallback gracefully to Test Simulator
-        setSimulatedOrderData(orderData);
-        setShowSimulatorModal(true);
-        setPaymentState("PAYMENT_PENDING");
       }
     } catch (err: any) {
       console.error("[Checkout] Payment initiation error:", err);
@@ -358,7 +322,7 @@ function CheckoutContent() {
       setPaymentState((current) => {
         if (
           current === "CREATING_ORDER" ||
-          current === "LOADING_RAZORPAY" ||
+          current === "LOADING_CASHFREE" ||
           current === "OPENING_CHECKOUT"
         ) {
           return "PAYMENT_FAILED";
@@ -368,22 +332,25 @@ function CheckoutContent() {
     }
   };
 
-  // Server-side cryptographic signature verification
-  const verifyPaymentOnServer = async (orderData: any, rzpResponse: any) => {
+  // Server-side Cashfree payment verification
+  const verifyPaymentOnServer = async (orderData: any, paymentDetails?: any) => {
     setPaymentState("VERIFYING_PAYMENT");
     setErrorMessage(null);
 
     try {
-      console.info("[Checkout] Verifying payment cryptographic signature with server...");
+      console.info("[Checkout] Verifying Cashfree payment with server...");
       const verifyRes = await fetch("/api/payments/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           order_id: orderData.order_id,
-          razorpay_order_id: rzpResponse.razorpay_order_id,
-          razorpay_payment_id: rzpResponse.razorpay_payment_id,
-          razorpay_signature: rzpResponse.razorpay_signature,
+          cf_order_id: orderData.cf_order_id || (paymentDetails && paymentDetails.cf_order_id),
+          cf_payment_id: paymentDetails && paymentDetails.cf_payment_id,
+          payment_session_id: orderData.payment_session_id,
           payment_method: selectedMethod,
+          dummy_transaction_id: paymentDetails && paymentDetails.dummy_transaction_id,
+          payment_mode: paymentDetails && paymentDetails.payment_mode,
+          sandbox_token: paymentDetails && paymentDetails.sandbox_token,
           booking_payload: orderData.metadata?.booking_payload
         })
       });
@@ -391,7 +358,7 @@ function CheckoutContent() {
       const verifyData = await verifyRes.json();
       if (!verifyRes.ok || !verifyData.success) {
         setPaymentState("PAYMENT_FAILED");
-        const failureReason = verifyData.error || "Cryptographic digital signature mismatch.";
+        const failureReason = verifyData.error || "Payment verification failed on gateway.";
         setErrorMessage(failureReason);
         router.push(
           `/payment/failed?order_id=${orderData.order_id}&payment_id=${orderData.payment_id}&reason=${encodeURIComponent(failureReason)}`
@@ -429,21 +396,18 @@ function CheckoutContent() {
     // Success simulation
     setPaymentState("VERIFYING_PAYMENT");
 
-    const fakePaymentId = `pay_test_${Math.random().toString(36).substring(2, 12)}`;
-    // Compute valid test signature using test mode token format
-    const testSignature = `sig_test_${Array(55).fill("0").join("")}`;
-
+    const fakePaymentId = `cf_test_pay_${Math.random().toString(36).substring(2, 12)}`;
     await verifyPaymentOnServer(simulatedOrderData, {
-      razorpay_order_id: simulatedOrderData.razorpay_order_id,
-      razorpay_payment_id: fakePaymentId,
-      razorpay_signature: testSignature
+      cf_order_id: simulatedOrderData.cf_order_id,
+      cf_payment_id: fakePaymentId,
+      sandbox_token: true
     });
   };
 
   // Button text & state helpers
   const isButtonDisabled =
     paymentState === "CREATING_ORDER" ||
-    paymentState === "LOADING_RAZORPAY" ||
+    paymentState === "LOADING_CASHFREE" ||
     paymentState === "OPENING_CHECKOUT" ||
     paymentState === "VERIFYING_PAYMENT" ||
     paymentState === "PAYMENT_SUCCESS";
@@ -457,18 +421,18 @@ function CheckoutContent() {
             <span>Creating Secure Payment...</span>
           </>
         );
-      case "LOADING_RAZORPAY":
+      case "LOADING_CASHFREE":
         return (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Loading Payment Gateway...</span>
+            <span>Loading Cashfree Gateway...</span>
           </>
         );
       case "OPENING_CHECKOUT":
         return (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Opening Razorpay...</span>
+            <span>Opening Cashfree Checkout...</span>
           </>
         );
       case "PAYMENT_PENDING":
@@ -900,7 +864,7 @@ function CheckoutContent() {
               <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#258FE5]" />
-                  <h3 className="text-base font-semibold text-[#163B63]">Razorpay Test Mode Gateway</h3>
+                  <h3 className="text-base font-semibold text-[#163B63]">Cashfree Test Mode Gateway</h3>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-[#EAF5FC] text-[#163B63] px-2.5 py-0.5 rounded-full">
                   Test Mode Active
@@ -921,8 +885,8 @@ function CheckoutContent() {
                   <span className="font-mono font-medium text-[#163B63]">{simulatedOrderData.order_reference}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#526A82]">Razorpay Order ID:</span>
-                  <span className="font-mono font-medium text-[#163B63]">{simulatedOrderData.razorpay_order_id}</span>
+                  <span className="text-[#526A82]">Cashfree Order ID:</span>
+                  <span className="font-mono font-medium text-[#163B63]">{simulatedOrderData.cf_order_id || simulatedOrderData.razorpay_order_id}</span>
                 </div>
                 <div className="flex justify-between pt-1 border-t border-[#D5E4EF]">
                   <span className="text-[#526A82]">Total Amount:</span>

@@ -4,7 +4,7 @@ Test Suite for Patient Health Profile, Dynamic Symptom Suggestions, and Geospati
 
 import pytest
 import uuid
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from backend.app.db.database import SessionLocal
 from backend.app.db.models import (
     User,
@@ -191,7 +191,7 @@ def test_direct_appointment_booking_with_chennai_doctor(db):
         "patient_name": "Siddharth Raman",
         "patient_email": "siddharth@example.com",
         "patient_phone": "+91 98401 11223",
-        "date": date.today().strftime("%Y-%m-%d"),
+        "date": (date.today() + timedelta(days=2)).strftime("%Y-%m-%d"),
         "time": "10:30 AM",
         "start_time": "10:30",
         "type": "online",

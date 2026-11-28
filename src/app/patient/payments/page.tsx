@@ -27,8 +27,11 @@ interface PaymentRecord {
   payment_id: string;
   order_id: string;
   order_reference: string;
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
+  cf_order_id?: string;
+  cf_payment_id?: string;
+  cf_refund_id?: string;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
   amount: number;
   currency: string;
   payment_method: string;
@@ -86,7 +89,7 @@ export default function PaymentHistoryPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setRefundMsg("Refund successfully processed via Razorpay.");
+        setRefundMsg("Refund successfully processed via Cashfree.");
         fetchPayments();
         if (selectedPayment?.payment_id === paymentId) {
           setSelectedPayment({
@@ -109,7 +112,8 @@ export default function PaymentHistoryPage() {
   const filteredPayments = payments.filter((p) => {
     const matchesSearch =
       p.order_reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.razorpay_payment_id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.cf_payment_id || p.razorpay_payment_id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.cf_order_id || p.razorpay_order_id || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.doctor_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.service_name.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -181,7 +185,7 @@ export default function PaymentHistoryPage() {
               Payment History & Receipts
             </h1>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Verified Razorpay transactions, GST receipts, and consultation billing records
+              Verified Cashfree transactions, GST receipts, and consultation billing records
             </p>
           </div>
 
@@ -196,7 +200,7 @@ export default function PaymentHistoryPage() {
             </button>
             <div className="px-3 py-2 rounded-xl bg-[#EAF5FC] border border-[#DCE6EF] text-xs text-[#163B63] flex items-center gap-1.5 font-semibold">
               <ShieldCheck className="w-4 h-4 text-[#258FE5]" />
-              Razorpay Secured
+              Cashfree Secured
             </div>
           </div>
         </div>
@@ -283,7 +287,7 @@ export default function PaymentHistoryPage() {
                           {p.order_reference}
                         </span>
                         <span className="font-mono text-[10px] text-[#64748B]">
-                          {p.razorpay_payment_id || p.payment_id}
+                          {p.cf_payment_id || p.razorpay_payment_id || p.payment_id}
                         </span>
                       </td>
 
@@ -388,12 +392,12 @@ export default function PaymentHistoryPage() {
                   <span className="font-mono font-medium text-[#163B63]">{selectedPayment.order_reference}</span>
                 </div>
                 <div className="pt-2 flex justify-between">
-                  <span className="text-[#64748B]">Razorpay Payment ID:</span>
-                  <span className="font-mono text-[#163B63]">{selectedPayment.razorpay_payment_id || "N/A"}</span>
+                  <span className="text-[#64748B]">Cashfree Payment ID:</span>
+                  <span className="font-mono text-[#163B63]">{selectedPayment.cf_payment_id || selectedPayment.razorpay_payment_id || "N/A"}</span>
                 </div>
                 <div className="pt-2 flex justify-between">
-                  <span className="text-[#64748B]">Razorpay Order ID:</span>
-                  <span className="font-mono text-[#163B63]">{selectedPayment.razorpay_order_id || "N/A"}</span>
+                  <span className="text-[#64748B]">Cashfree Order ID:</span>
+                  <span className="font-mono text-[#163B63]">{selectedPayment.cf_order_id || selectedPayment.razorpay_order_id || "N/A"}</span>
                 </div>
                 <div className="pt-2 flex justify-between">
                   <span className="text-[#64748B]">Service:</span>

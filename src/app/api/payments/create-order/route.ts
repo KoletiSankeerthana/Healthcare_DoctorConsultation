@@ -21,12 +21,12 @@ export async function POST(request: NextRequest) {
       patient_phone: body.patient_phone || user.phone
     };
 
-    console.info(`[Payment API] Creating order for user=${user.id}, doctor_id=${payload.doctor_id}, mode=${paymentMode}`);
+    console.info(`[Payment API] Creating Cashfree order for user=${user.id}, doctor_id=${payload.doctor_id}, mode=${paymentMode}`);
 
-    // 1. Try FastAPI backend over HTTP (< 5ms)
+    // 1. Try FastAPI backend over HTTP
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const fastApiRes = await fetch(`${BACKEND_URL}/payments/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,25 +37,28 @@ export async function POST(request: NextRequest) {
 
       if (fastApiRes.ok) {
         const data = await fastApiRes.json();
-        console.info(`[Payment API] Order created via FastAPI: order_id=${data.order_id}, rzp_order=${data.razorpay_order_id}`);
+        console.info(`[Payment API] Order created via FastAPI: order_id=${data.order_id}, cf_order=${data.cf_order_id}`);
         return NextResponse.json(data, { status: 201 });
+      } else {
+        const errData = await fastApiRes.json().catch(() => ({}));
+        console.warn(`[Payment API] FastAPI /payments/create-order returned ${fastApiRes.status}:`, errData);
       }
-    } catch (e) {
-      // Backend offline or slow; fall back to direct SQLite bridge
+    } catch (e: any) {
+      console.warn("[Payment API] FastAPI call timed out or unreachable, trying DB bridge fallback:", e.message);
     }
 
     // 2. Direct Python DB bridge fallback
     const result = callDbBridge("payment_create_order", [user.id], payload);
 
     if (!result || !result.success) {
-      console.warn(`[Payment API] Order creation failed: ${result?.error}`);
+      console.warn(`[Payment API] Order creation failed via DB Bridge: ${result?.error}`);
       return NextResponse.json(
-        { error: result?.error || "Unable to initialize payment order on gateway." },
+        { error: result?.error || "Unable to initialize Cashfree payment order on gateway." },
         { status: 400 }
       );
     }
 
-    console.info(`[Payment API] Order created via DB Bridge: order_id=${result.order_id}, rzp_order=${result.razorpay_order_id}`);
+    console.info(`[Payment API] Order created via DB Bridge: order_id=${result.order_id}, cf_order=${result.cf_order_id}`);
     return NextResponse.json(result, { status: 201 });
   } catch (err: any) {
     console.error("[Payment API] /api/payments/create-order error:", err);

@@ -4,6 +4,20 @@ from pathlib import Path
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
+try:
+    from dotenv import load_dotenv
+    _curr = Path(__file__).resolve()
+    _bdir = _curr.parent.parent
+    _rdir = _bdir.parent
+    if (_rdir / ".env").exists():
+        load_dotenv(_rdir / ".env")
+    elif (_bdir / ".env").exists():
+        load_dotenv(_bdir / ".env")
+    else:
+        load_dotenv()
+except ImportError:
+    pass
+
 # Ensure project root and backend directory are in sys.path
 _current_file = Path(__file__).resolve()
 BASE_DIR = _current_file.parent.parent  # backend/
@@ -191,12 +205,12 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5000"
     ]
 
-    # Payment Gateway Configuration (Mock Test Mode or Real Razorpay)
-    PAYMENT_MODE: str = os.getenv("PAYMENT_MODE", "mock").lower()
-    RAZORPAY_KEY_ID: str = os.getenv("RAZORPAY_KEY_ID", "rzp_test_mediverse_2026")
-    RAZORPAY_KEY_SECRET: str = os.getenv("RAZORPAY_KEY_SECRET", "mediverse_test_secret_key_2026")
-    RAZORPAY_WEBHOOK_SECRET: str = os.getenv("RAZORPAY_WEBHOOK_SECRET", "mediverse_test_webhook_secret_2026")
-    NEXT_PUBLIC_RAZORPAY_KEY_ID: str = os.getenv("NEXT_PUBLIC_RAZORPAY_KEY_ID", "rzp_test_mediverse_2026")
+    # Payment Gateway Configuration (Cashfree Payments & Test Mock Mode)
+    PAYMENT_MODE: str = os.getenv("PAYMENT_MODE", "cashfree").lower()
+    CASHFREE_APP_ID: str = os.getenv("CASHFREE_APP_ID", "")
+    CASHFREE_SECRET_KEY: str = os.getenv("CASHFREE_SECRET_KEY", "")
+    CASHFREE_ENV: str = os.getenv("CASHFREE_ENV", "SANDBOX").upper()
+    CASHFREE_API_VERSION: str = os.getenv("CASHFREE_API_VERSION", "2023-08-01")
 
 
     class Config:
